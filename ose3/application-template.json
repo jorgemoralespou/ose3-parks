@@ -1,0 +1,788 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "parks-map"
+    },
+    "objects": [
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "mongodb",
+                "labels": {
+                    "component": "mongodb"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "mongo",
+                        "protocol": "TCP",
+                        "port": 27017,
+                        "targetPort": 27017
+                    }
+                ],
+                "selector": {
+                    "name": "mongodb"
+                },
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "mongodb",
+                "labels": {
+                    "component": "mongodb"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "Recreate",
+                    "recreateParams": {
+                        "timeoutSeconds": 600
+                    },
+                    "resources": {}
+                },
+                "triggers": [
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "mongodb"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "namespace": "openshift",
+                                "name": "mongodb:3.2"
+                            }
+                        }
+                    },
+                    {
+                        "type": "ConfigChange"
+                    }
+                ],
+                "replicas": 1,
+                "test": false,
+                "selector": {
+                    "name": "mongodb"
+                },
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "name": "mongodb"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "mongodb-data",
+                                "emptyDir": {}
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "mongodb",
+                                "image": "mongodb",
+                                "ports": [
+                                    {
+                                        "containerPort": 27017,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                    {
+                                        "name": "MONGODB_USER",
+                                        "value": "mongodb"
+                                    },
+                                    {
+                                        "name": "MONGODB_PASSWORD",
+                                        "value": "mongodb"
+                                    },
+                                    {
+                                        "name": "MONGODB_DATABASE",
+                                        "value": "mongodb"
+                                    },
+                                    {
+                                        "name": "MONGODB_ADMIN_PASSWORD",
+                                        "value": "mongodb"
+                                    }
+                                ],
+                                "resources": {
+                                    "limits": {
+                                        "memory": "512Mi"
+                                    }
+                                },
+                                "volumeMounts": [
+                                    {
+                                        "name": "mongodb-data",
+                                        "mountPath": "/var/lib/mongodb/data"
+                                    }
+                                ],
+                                "livenessProbe": {
+                                    "tcpSocket": {
+                                        "port": 27017
+                                    },
+                                    "initialDelaySeconds": 30,
+                                    "timeoutSeconds": 1,
+                                    "periodSeconds": 10,
+                                    "successThreshold": 1,
+                                    "failureThreshold": 3
+                                },
+                                "readinessProbe": {
+                                    "exec": {
+                                        "command": [
+                                            "/bin/sh",
+                                            "-i",
+                                            "-c",
+                                            "mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD --eval=\"quit()\""
+                                        ]
+                                    },
+                                    "initialDelaySeconds": 3,
+                                    "timeoutSeconds": 1,
+                                    "periodSeconds": 10,
+                                    "successThreshold": 1,
+                                    "failureThreshold": 3
+                                },
+                                "terminationMessagePath": "/dev/termination-log",
+                                "imagePullPolicy": "IfNotPresent",
+                                "securityContext": {
+                                    "capabilities": {},
+                                    "privileged": false
+                                }
+                            }
+                        ],
+                        "restartPolicy": "Always",
+                        "terminationGracePeriodSeconds": 30,
+                        "dnsPolicy": "ClusterFirst",
+                        "securityContext": {}
+                    }
+                }
+            }
+        },
+      {
+        "kind": "ImageStream",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "s2i-java"
+        },
+        "spec": {
+          "tags": [
+            {
+              "name": "latest",
+              "from": {
+                "kind": "DockerImage",
+                "name": "jorgemoralespou/s2i-java"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "ImageStream",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "web"
+        },
+        "spec": {
+          "tags": [
+            {
+              "name": "latest"
+            }
+          ]
+        }
+      },
+      {
+        "kind": "BuildConfig",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "web",
+          "labels": {
+            "build": "web"
+          }
+        },
+        "spec": {
+          "triggers": [
+            {
+              "type": "GitHub",
+              "github": {
+                "secret": "secret101"
+              }
+            },
+            {
+              "type": "Generic",
+              "generic": {
+                "secret": "secret101"
+              }
+            }
+          ],
+          "runPolicy": "Serial",
+          "source": {
+            "type": "Binary",
+            "binary": {}
+          },
+          "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "s2i-java:latest"
+              },
+              "env": [
+                {
+                  "name": "BUILDER_ARGS",
+                  "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,web-svc"
+                },
+                {
+                  "name": "PROJECT",
+                  "value": "web-svc"
+                }
+              ],
+              "incremental": true
+            }
+          },
+          "output": {
+            "to": {
+              "kind": "ImageStreamTag",
+              "name": "web:latest"
+            }
+          },
+          "resources": {},
+          "postCommit": {}
+        }
+      },
+      {
+        "kind": "DeploymentConfig",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "web",
+          "labels": {
+            "app": "web"
+          }
+        },
+        "spec": {
+          "strategy": {
+            "type": "Rolling",
+            "rollingParams": {
+              "updatePeriodSeconds": 1,
+              "intervalSeconds": 1,
+              "timeoutSeconds": 600,
+              "maxUnavailable": "25%",
+              "maxSurge": "25%"
+            },
+            "resources": {}
+          },
+          "triggers": [
+            {
+              "type": "ConfigChange"
+            },
+            {
+              "type": "ImageChange",
+              "imageChangeParams": {
+                "automatic": true,
+                "containerNames": [
+                  "web"
+                ],
+                "from": {
+                  "kind": "ImageStreamTag",
+                  "name": "web:latest"
+                }
+              }
+            }
+          ],
+          "replicas": 1,
+          "test": false,
+          "selector": {
+            "app": "web",
+            "deploymentconfig": "web"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "app": "web",
+                "deploymentconfig": "web"
+              }
+            },
+            "spec": {
+              "containers": [
+                {
+                  "name": "web",
+                  "image": "web",
+                  "ports": [
+                    {
+                      "containerPort": 8080,
+                      "protocol": "TCP"
+                    }
+                  ],
+                  "resources": {},
+                  "terminationMessagePath": "/dev/termination-log",
+                  "imagePullPolicy": "Always"
+                }
+              ],
+              "restartPolicy": "Always",
+              "terminationGracePeriodSeconds": 30,
+              "dnsPolicy": "ClusterFirst",
+              "securityContext": {}
+            }
+          }
+        }
+      },
+      {
+        "kind": "Service",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "web",
+          "labels": {
+            "app": "web"
+          },
+          "annotations": {
+            "service.alpha.openshift.io/dependencies": "[{\"name\":\"mlbparks\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"nationalparks\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"mongodb\",\"namespace\":\"\",\"kind\":\"Service\"}]"
+          }
+        },
+        "spec": {
+          "ports": [
+            {
+              "name": "8080-tcp",
+              "protocol": "TCP",
+              "port": 8080,
+              "targetPort": 8080
+            }
+          ],
+          "selector": {
+            "app": "web",
+            "deploymentconfig": "web"
+          },
+          "type": "ClusterIP",
+          "sessionAffinity": "None"
+        }
+      },
+      {
+        "kind": "Route",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "web",
+          "labels": {
+            "app": "web"
+          }
+        },
+        "spec": {
+          "host": "web-svc.apps.10.2.2.2.xip.io",
+          "to": {
+            "kind": "Service",
+            "name": "web",
+            "weight": 100
+          },
+          "port": {
+            "targetPort": "8080-tcp"
+          }
+        }
+      },
+
+
+
+
+
+
+      {
+        "kind": "ImageStream",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "nationalparks"
+        },
+        "spec": {
+          "tags": [
+            {
+              "name": "latest"
+            }
+          ]
+        }
+      },
+      {
+        "kind": "BuildConfig",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "nationalparks",
+          "labels": {
+            "build": "nationalparks"
+          }
+        },
+        "spec": {
+          "triggers": [
+            {
+              "type": "GitHub",
+              "github": {
+                "secret": "secret101"
+              }
+            },
+            {
+              "type": "Generic",
+              "generic": {
+                "secret": "secret101"
+              }
+            }
+          ],
+          "runPolicy": "Serial",
+          "source": {
+            "type": "Binary",
+            "binary": {}
+          },
+          "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "s2i-java:latest"
+              },
+              "env": [
+                {
+                  "name": "BUILDER_ARGS",
+                  "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,nationalparks-mongo"
+                },
+                {
+                  "name": "PROJECT",
+                  "value": "nationalparks-mongo"
+                }
+              ],
+              "incremental": true
+            }
+          },
+          "output": {
+            "to": {
+              "kind": "ImageStreamTag",
+              "name": "nationalparks:latest"
+            }
+          },
+          "resources": {},
+          "postCommit": {}
+        }
+      },
+      {
+        "kind": "DeploymentConfig",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "nationalparks",
+          "labels": {
+            "app": "nationalparks"
+          }
+        },
+        "spec": {
+          "strategy": {
+            "type": "Rolling",
+            "rollingParams": {
+              "updatePeriodSeconds": 1,
+              "intervalSeconds": 1,
+              "timeoutSeconds": 600,
+              "maxUnavailable": "25%",
+              "maxSurge": "25%"
+            },
+            "resources": {}
+          },
+          "triggers": [
+            {
+              "type": "ConfigChange"
+            },
+            {
+              "type": "ImageChange",
+              "imageChangeParams": {
+                "automatic": true,
+                "containerNames": [
+                  "nationalparks"
+                ],
+                "from": {
+                  "kind": "ImageStreamTag",
+                  "name": "nationalparks:latest"
+                }
+              }
+            }
+          ],
+          "replicas": 1,
+          "test": false,
+          "selector": {
+            "app": "nationalparks",
+            "deploymentconfig": "nationalparks"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "app": "nationalparks",
+                "deploymentconfig": "nationalparks"
+              }
+            },
+            "spec": {
+              "containers": [
+                {
+                  "name": "nationalparks",
+                  "image": "nationalparks",
+                  "ports": [
+                    {
+                      "containerPort": 8080,
+                      "protocol": "TCP"
+                    }
+                  ],
+                  "resources": {},
+                  "terminationMessagePath": "/dev/termination-log",
+                  "imagePullPolicy": "Always"
+                }
+              ],
+              "restartPolicy": "Always",
+              "terminationGracePeriodSeconds": 30,
+              "dnsPolicy": "ClusterFirst",
+              "securityContext": {}
+            }
+          }
+        }
+      },
+      {
+        "kind": "Service",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "nationalparks",
+          "labels": {
+            "app": "nationalparks"
+          }
+        },
+        "spec": {
+          "ports": [
+            {
+              "name": "8080-tcp",
+              "protocol": "TCP",
+              "port": 8080,
+              "targetPort": 8080
+            }
+          ],
+          "selector": {
+            "app": "nationalparks",
+            "deploymentconfig": "nationalparks"
+          },
+          "type": "ClusterIP",
+          "sessionAffinity": "None"
+        }
+      },
+      {
+        "kind": "Route",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "nationalparks",
+          "labels": {
+            "app": "nationalparks"
+          }
+        },
+        "spec": {
+          "host": "nationalparks.apps.10.2.2.2.xip.io",
+          "to": {
+            "kind": "Service",
+            "name": "nationalparks",
+            "weight": 100
+          },
+          "port": {
+            "targetPort": "8080-tcp"
+          }
+        }
+      },
+
+
+
+
+
+      {
+        "kind": "ImageStream",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "mlbparks"
+        },
+        "spec": {
+          "tags": [
+            {
+              "name": "latest"
+            }
+          ]
+        }
+      },
+      {
+        "kind": "BuildConfig",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "mlbparks",
+          "labels": {
+            "build": "mlbparks"
+          }
+        },
+        "spec": {
+          "triggers": [
+            {
+              "type": "GitHub",
+              "github": {
+                "secret": "secret101"
+              }
+            },
+            {
+              "type": "Generic",
+              "generic": {
+                "secret": "secret101"
+              }
+            }
+          ],
+          "runPolicy": "Serial",
+          "source": {
+            "type": "Binary",
+            "binary": {}
+          },
+          "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "s2i-java:latest"
+              },
+              "env": [
+                {
+                  "name": "BUILDER_ARGS",
+                  "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,mlbparks-mongo"
+                },
+                {
+                  "name": "PROJECT",
+                  "value": "mlbparks-mongo"
+                }
+              ],
+              "incremental": true
+            }
+          },
+          "output": {
+            "to": {
+              "kind": "ImageStreamTag",
+              "name": "mlbparks:latest"
+            }
+          },
+          "resources": {},
+          "postCommit": {}
+        }
+      },
+      {
+        "kind": "DeploymentConfig",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "mlbparks",
+          "labels": {
+            "app": "mlbparks"
+          }
+        },
+        "spec": {
+          "strategy": {
+            "type": "Rolling",
+            "rollingParams": {
+              "updatePeriodSeconds": 1,
+              "intervalSeconds": 1,
+              "timeoutSeconds": 600,
+              "maxUnavailable": "25%",
+              "maxSurge": "25%"
+            },
+            "resources": {}
+          },
+          "triggers": [
+            {
+              "type": "ConfigChange"
+            },
+            {
+              "type": "ImageChange",
+              "imageChangeParams": {
+                "automatic": true,
+                "containerNames": [
+                  "mlbparks"
+                ],
+                "from": {
+                  "kind": "ImageStreamTag",
+                  "name": "mlbparks:latest"
+                }
+              }
+            }
+          ],
+          "replicas": 1,
+          "test": false,
+          "selector": {
+            "app": "mlbparks",
+            "deploymentconfig": "mlbparks"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "app": "mlbparks",
+                "deploymentconfig": "mlbparks"
+              }
+            },
+            "spec": {
+              "containers": [
+                {
+                  "name": "mlbparks",
+                  "image": "mlbparks",
+                  "ports": [
+                    {
+                      "containerPort": 8080,
+                      "protocol": "TCP"
+                    }
+                  ],
+                  "resources": {},
+                  "terminationMessagePath": "/dev/termination-log",
+                  "imagePullPolicy": "Always"
+                }
+              ],
+              "restartPolicy": "Always",
+              "terminationGracePeriodSeconds": 30,
+              "dnsPolicy": "ClusterFirst",
+              "securityContext": {}
+            }
+          }
+        }
+      },
+      {
+        "kind": "Service",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "mlbparks",
+          "labels": {
+            "app": "mlbparks"
+          }
+        },
+        "spec": {
+          "ports": [
+            {
+              "name": "8080-tcp",
+              "protocol": "TCP",
+              "port": 8080,
+              "targetPort": 8080
+            }
+          ],
+          "selector": {
+            "app": "mlbparks",
+            "deploymentconfig": "mlbparks"
+          },
+          "type": "ClusterIP",
+          "sessionAffinity": "None"
+        }
+      },
+      {
+        "kind": "Route",
+        "apiVersion": "v1",
+        "metadata": {
+          "name": "mlbparks",
+          "labels": {
+            "app": "mlbparks"
+          }
+        },
+        "spec": {
+          "host": "mlbparks.apps.10.2.2.2.xip.io",
+          "to": {
+            "kind": "Service",
+            "name": "mlbparks",
+            "weight": 100
+          },
+          "port": {
+            "targetPort": "8080-tcp"
+          }
+        }
+      }
+    ]
+}
