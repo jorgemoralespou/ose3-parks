@@ -264,7 +264,7 @@
       "metadata": {
         "name": "web",
         "labels": {
-          "app": "web"
+          "component": "web"
         }
       },
       "spec": {
@@ -300,13 +300,13 @@
         "replicas": 1,
         "test": false,
         "selector": {
-          "app": "web",
+          "component": "web",
           "deploymentconfig": "web"
         },
         "template": {
           "metadata": {
             "labels": {
-              "app": "web",
+              "component": "web",
               "deploymentconfig": "web"
             }
           },
@@ -340,7 +340,7 @@
       "metadata": {
         "name": "web",
         "labels": {
-          "app": "web"
+          "component": "web"
         },
         "annotations": {
           "service.alpha.openshift.io/dependencies": "[{\"name\":\"mlbparks\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"nationalparks\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"mongodb\",\"namespace\":\"\",\"kind\":\"Service\"}]"
@@ -356,7 +356,7 @@
           }
         ],
         "selector": {
-          "app": "web",
+          "component": "web",
           "deploymentconfig": "web"
         },
         "type": "ClusterIP",
@@ -369,7 +369,7 @@
       "metadata": {
         "name": "web",
         "labels": {
-          "app": "web"
+          "component": "web"
         }
       },
       "spec": {
@@ -466,7 +466,7 @@
       "metadata": {
         "name": "nationalparks",
         "labels": {
-          "app": "nationalparks"
+          "component": "nationalparks"
         }
       },
       "spec": {
@@ -502,13 +502,13 @@
         "replicas": 1,
         "test": false,
         "selector": {
-          "app": "nationalparks",
+          "component": "nationalparks",
           "deploymentconfig": "nationalparks"
         },
         "template": {
           "metadata": {
             "labels": {
-              "app": "nationalparks",
+              "component": "nationalparks",
               "deploymentconfig": "nationalparks"
             }
           },
@@ -542,7 +542,7 @@
       "metadata": {
         "name": "nationalparks",
         "labels": {
-          "app": "nationalparks"
+          "component": "nationalparks"
         }
       },
       "spec": {
@@ -555,7 +555,7 @@
           }
         ],
         "selector": {
-          "app": "nationalparks",
+          "component": "nationalparks",
           "deploymentconfig": "nationalparks"
         },
         "type": "ClusterIP",
@@ -568,7 +568,7 @@
       "metadata": {
         "name": "nationalparks",
         "labels": {
-          "app": "nationalparks"
+          "component": "nationalparks"
         }
       },
       "spec": {
@@ -665,7 +665,7 @@
       "metadata": {
         "name": "mlbparks",
         "labels": {
-          "app": "mlbparks"
+          "component": "mlbparks"
         }
       },
       "spec": {
@@ -701,13 +701,13 @@
         "replicas": 1,
         "test": false,
         "selector": {
-          "app": "mlbparks",
+          "component": "mlbparks",
           "deploymentconfig": "mlbparks"
         },
         "template": {
           "metadata": {
             "labels": {
-              "app": "mlbparks",
+              "component": "mlbparks",
               "deploymentconfig": "mlbparks"
             }
           },
@@ -741,7 +741,7 @@
       "metadata": {
         "name": "mlbparks",
         "labels": {
-          "app": "mlbparks"
+          "component": "mlbparks"
         }
       },
       "spec": {
@@ -767,7 +767,7 @@
       "metadata": {
         "name": "mlbparks",
         "labels": {
-          "app": "mlbparks"
+          "component": "mlbparks"
         }
       },
       "spec": {
