@@ -241,8 +241,8 @@
                 "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,web-svc"
               },
               {
-                "name": "PROJECT",
-                "value": "web-svc"
+                "name": "ARTIFACT_DIR",
+                "value": "web-svc/target"
               }
             ],
             "incremental": true
@@ -443,8 +443,8 @@
                 "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,nationalparks-mongo"
               },
               {
-                "name": "PROJECT",
-                "value": "nationalparks-mongo"
+                "name": "ARTIFACT_DIR",
+                "value": "nationalparks-mongo/target"
               }
             ],
             "incremental": true
@@ -642,8 +642,8 @@
                 "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,mlbparks-mongo"
               },
               {
-                "name": "PROJECT",
-                "value": "mlbparks-mongo"
+                "name": "ARTIFACT_DIR",
+                "value": "mlbparks-mongo/target"
               }
             ],
             "incremental": true
