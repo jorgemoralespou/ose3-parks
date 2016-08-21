@@ -23,6 +23,13 @@ public class MongoDBConnection {
 
     private static final String COLLECTION = "mlbparks";
 
+    // TODO: Get this from a Config file
+    String mongoHost = System.getenv("MONGODB_SERVICE_HOST");
+    String mongoPort = System.getenv("MONGODB_SERVICE_PORT");
+    String mongoUser = System.getenv("MONGODB_USER");
+    String mongoPassword = System.getenv("MONGODB_PASSWORD");
+    String mongoDBName = System.getenv("MONGODB_DATABASE");
+
     public MongoDatabase connect(){
         List<MongoCredential> creds = new ArrayList<MongoCredential>();
         creds.add(MongoCredential.createCredential("mongodb","mongodb","mongodb".toCharArray()));

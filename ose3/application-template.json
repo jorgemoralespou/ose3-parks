@@ -237,7 +237,7 @@
             },
             "env": [
               {
-                "name": "BUILDER_ARGS",
+                "name": "MAVEN_ARGS",
                 "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,web-svc"
               },
               {
@@ -322,8 +322,32 @@
                   }
                 ],
                 "resources": {},
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/ws/healthz",
+                    "port": 8080,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 120,
+                  "timeoutSeconds": 1,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "failureThreshold": 3
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/ws/healthz",
+                    "port": 8080,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 20,
+                  "timeoutSeconds": 1,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "failureThreshold": 3
+                },
                 "terminationMessagePath": "/dev/termination-log",
-                "imagePullPolicy": "Always"
+                "imagePullPolicy": "IfNotPresent"
               }
             ],
             "restartPolicy": "Always",
@@ -439,7 +463,7 @@
             },
             "env": [
               {
-                "name": "BUILDER_ARGS",
+                "name": "MAVEN_ARGS",
                 "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,nationalparks-mongo"
               },
               {
@@ -524,8 +548,32 @@
                   }
                 ],
                 "resources": {},
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/ws/healthz",
+                    "port": 8080,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 120,
+                  "timeoutSeconds": 1,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "failureThreshold": 3
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/ws/healthz",
+                    "port": 8080,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 20,
+                  "timeoutSeconds": 1,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "failureThreshold": 3
+                },
                 "terminationMessagePath": "/dev/termination-log",
-                "imagePullPolicy": "Always"
+                "imagePullPolicy": "IfNotPresent"
               }
             ],
             "restartPolicy": "Always",
@@ -638,7 +686,7 @@
             },
             "env": [
               {
-                "name": "BUILDER_ARGS",
+                "name": "MAVEN_ARGS",
                 "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,mlbparks-mongo"
               },
               {
@@ -723,8 +771,32 @@
                   }
                 ],
                 "resources": {},
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/ws/healthz",
+                    "port": 8080,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 120,
+                  "timeoutSeconds": 1,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "failureThreshold": 3
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/ws/healthz",
+                    "port": 8080,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 20,
+                  "timeoutSeconds": 1,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "failureThreshold": 3
+                },
                 "terminationMessagePath": "/dev/termination-log",
-                "imagePullPolicy": "Always"
+                "imagePullPolicy": "IfNotPresent"
               }
             ],
             "restartPolicy": "Always",
@@ -754,7 +826,7 @@
           }
         ],
         "selector": {
-          "app": "mlbparks",
+          "component": "mlbparks",
           "deploymentconfig": "mlbparks"
         },
         "type": "ClusterIP",

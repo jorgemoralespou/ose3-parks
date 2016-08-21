@@ -7,7 +7,7 @@ import javax.ws.rs.Produces;
 /**
  * Created by jmorales on 11/08/16.
  */
-@Path("/healtz")
+@Path("/healthz")
 public class Healthz {
 
     @GET

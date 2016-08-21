@@ -74,7 +74,8 @@ public class DefaultResource implements ParksResource {
         System.out.println("[DEBUG] getInitialView");
 
         if (parkService != null) {
-            Response res = client.target("http://" + parkService + "/ws/parks/initialView").request(MediaType.APPLICATION_JSON).get();
+            // TODO: Set a timeout of 1 second, at most
+            Response res = client.target("http://" + parkService + "/ws/parks/initialview").request(MediaType.APPLICATION_JSON).get();
             if (res.getStatus() == 200) {
                 System.out.println("[INFO] Remote service responded ok: " + res);
                 return (View) res.readEntity(View.class);

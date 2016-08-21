@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-public class MLBParkResource implements ParksResource{
+public class MLBParksResource implements ParksResource{
 
 	@Inject
 	private DBConnection dbConnection;
@@ -41,6 +41,8 @@ public class MLBParkResource implements ParksResource{
 	}
 */
 	public List<Park> getAllParks() {
+		System.out.println("[DEBUG] getAllParks");
+
 		ArrayList<Park> allParksList = new ArrayList<Park>();
 /*
 		DBCollection mlbParks = this.getMLBParksCollection();
@@ -61,6 +63,8 @@ public class MLBParkResource implements ParksResource{
                                       @QueryParam("lon1") float lon1,
 									  @QueryParam("lat2") float lat2,
                                       @QueryParam("lon2") float lon2) {
+		System.out.println("[DEBUG] findParksWithin(" + lat1 + "," + lon1 + "," + lat2 + "," + lon2 + ")");
+
 
 		ArrayList<Park> allParksList = new ArrayList<Park>();
 /*
@@ -93,6 +97,8 @@ public class MLBParkResource implements ParksResource{
 
 	@Override
 	public View getInitialView() {
-		return new View("Example map on OpenShift 3", "39.82","-98.57", 5);
+		System.out.println("[DEBUG] getInitialView");
+
+		return new View("MLBParks on OpenShift 3", "39.82","-98.57", 5);
 	}
 }
