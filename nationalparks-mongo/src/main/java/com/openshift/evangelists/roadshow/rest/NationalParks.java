@@ -1,12 +1,9 @@
 package com.openshift.evangelists.roadshow.rest;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
+import com.mongodb.*;
 import com.mongodb.client.MongoDatabase;
 import com.openshift.evangelists.roadshow.db.MongoDBConnection;
-import com.openshift.evangelists.roadshow.model.NationalPark;
-import com.openshift.evangelists.roadshow.model.Park;
+import com.openshift.evangelists.roadshow.model.DataPoint;
 import com.openshift.evangelists.roadshow.model.View;
 import org.bson.Document;
 
@@ -20,7 +17,10 @@ import java.util.List;
 /**
  * Created by jmorales on 11/08/16.
  */
-public class NationalParks implements ParksResource{
+@ApplicationScoped
+public class NationalParks implements DataPointsResource {
+
+    MongoDBConnection con = new MongoDBConnection();
 
     @GET
     @Produces("text/json")
@@ -48,46 +48,36 @@ public class NationalParks implements ParksResource{
     public Response getAll(){
         MongoDBConnection con = new MongoDBConnection();
         MongoDatabase db = con.connect();
-        List<NationalPark> parks = con.getAll(db);
-        return Response.ok(parks).build();
+        List<DataPoint> dataPoints = con.getAll(db);
+        return Response.ok(dataPoints).build();
     }
 
 
 
+    public List<DataPoint> getAllDataPoints() {
+        System.out.println("[DEBUG] getAllDataPoints");
 
+        MongoDBConnection con = new MongoDBConnection();
+        MongoDatabase db = con.connect();
 
-    public List<Park> getAllParks() {
-        ArrayList<Park> allParksList = new ArrayList<Park>();
-
-    /*
-        DBCollection mlbParks = this.getMLBParksCollection();
-        DBCursor cursor = mlbParks.find();
-        try {
-            while (cursor.hasNext()) {
-                allParksList.add(this.populateParkInformation(cursor.next()));
-            }
-        } finally {
-            cursor.close();
-        }
-    */
-        return allParksList;
+        return con.getAll(db);
     }
 
-    public List<Park> findParksWithin(@QueryParam("lat1") float lat1,
-                                      @QueryParam("lon1") float lon1,
-                                      @QueryParam("lat2") float lat2,
-                                      @QueryParam("lon2") float lon2) {
+    public List<DataPoint> findDataPointsWithin(@QueryParam("lat1") float lat1,
+                                           @QueryParam("lon1") float lon1,
+                                           @QueryParam("lat2") float lat2,
+                                           @QueryParam("lon2") float lon2) {
+        System.out.println("[DEBUG] findDataPointsWithin(" + lat1 + "," + lon1 + "," + lat2 + "," + lon2 + ")");
 
-        ArrayList<Park> allParksList = new ArrayList<Park>();
-        /*
-        DBCollection mlbParks = this.getMLBParksCollection();
+        MongoDBConnection con = new MongoDBConnection();
+        MongoDatabase db = con.connect();
 
         // make the query object
         BasicDBObject spatialQuery = new BasicDBObject();
 
         ArrayList<double[]> boxList = new ArrayList<double[]>();
-        boxList.add(new double[] { new Float(lon2), new Float(lat2) });
-        boxList.add(new double[] { new Float(lon1), new Float(lat1) });
+        boxList.add(new double[] { new Float(lat1), new Float(lon1) });
+        boxList.add(new double[] { new Float(lat2), new Float(lon2) });
 
         BasicDBObject boxQuery = new BasicDBObject();
         boxQuery.put("$box", boxList);
@@ -95,21 +85,47 @@ public class NationalParks implements ParksResource{
         spatialQuery.put("coordinates", new BasicDBObject("$within", boxQuery));
         System.out.println("Using spatial query: " + spatialQuery.toString());
 
-        DBCursor cursor = mlbParks.find(spatialQuery);
-        try {
-            while (cursor.hasNext()) {
-                allParksList.add(this.populateParkInformation(cursor.next()));
-            }
-        } finally {
-            cursor.close();
-        }
-        */
-
-        return allParksList;
+        return con.getByQuery(db, spatialQuery);
     }
 
     @Override
-    public View getInitialView() {
-        return new View("National Parks on OpenShift 3", "39.82","-98.57", 2);
+    public List<DataPoint> findDataPointsCentered(float lat, float lon, int maxDistance, int minDistance) {
+        // TODO: Implement
+        /*
+                MongoDBConnection con = new MongoDBConnection();
+        MongoDatabase db = con.connect();
+
+        // make the query object
+        BasicDBObject spatialQuery = new BasicDBObject();
+
+        ArrayList<double[]> boxList = new ArrayList<double[]>();
+        boxList.add(new double[] { new Float(lat1), new Float(lon1) });
+        boxList.add(new double[] { new Float(lat2), new Float(lon2) });
+
+        double [] center = new double[] { new Float(lat0), new Float(lon0) };
+
+
+        DBObject nearQuery = BasicDBObjectBuilder.start().push("location")
+                .push("$near")
+                .add("$maxDistance", 100*1000)
+                .push("$geometry")
+                .add("type", "Point")
+                .add("coordinates", center)
+                .get();
+
+
+        BasicDBObject boxQuery = new BasicDBObject();
+        boxQuery.put("$box", boxList);
+
+        spatialQuery.put("coordinates", new BasicDBObject("$within", boxQuery));
+        //spatialQuery.put("coordinates", new BasicDBObject("$near", nearQuery));
+        System.out.println("Using spatial query: " + nearQuery.toString());
+
+        return con.getByQuery(db, spatialQuery);
+//        return con.getByQuery(db,new BasicDBObject("$near",center));
+//        return con.getByQuery(db,(BasicDBObject)nearQuery);
+         */
+        return null;
     }
+
 }

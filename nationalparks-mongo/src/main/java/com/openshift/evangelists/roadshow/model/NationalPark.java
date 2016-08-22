@@ -1,18 +1,18 @@
 package com.openshift.evangelists.roadshow.model;
 
 
-public class NationalPark implements Park {
+public class NationalPark implements DataPoint {
 
     private Object toponymName;
     private Object name;
+
+    private Coordinates position;
 
     private Object longitude;
     private Object latitude;
 
     private Object countryCode;
     private Object countryName;
-
-    private Object administrativeName;
 
     private Object id;
 
@@ -30,6 +30,14 @@ public class NationalPark implements Park {
 
     public void setName(Object name) {
         this.name = name;
+    }
+
+    public Coordinates getPosition() {
+        return position;
+    }
+
+    public void setPosition(Coordinates position) {
+        this.position = position;
     }
 
     public Object getLongitude() {
@@ -64,14 +72,6 @@ public class NationalPark implements Park {
         this.countryName = countryName;
     }
 
-    public Object getAdministrativeName() {
-        return administrativeName;
-    }
-
-    public void setAdministrativeName(Object administrativeName) {
-        this.administrativeName = administrativeName;
-    }
-
     public Object getId() {
         return id;
     }
@@ -85,10 +85,8 @@ public class NationalPark implements Park {
         return "NationalPark{" +
                 "id=" + id +
                 ", name=" + name +
-                ", administrativeName=" + administrativeName +
                 ", toponymName=" + toponymName +
-                ", latitude=" + latitude +
-                ", longitude=" + longitude +
+                ", coordinates=" + position +
                 ", countryCode=" + countryCode +
                 ", countryName=" + countryName +
                 '}';

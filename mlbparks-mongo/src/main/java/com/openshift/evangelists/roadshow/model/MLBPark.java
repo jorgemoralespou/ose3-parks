@@ -3,9 +3,11 @@ package com.openshift.evangelists.roadshow.model;
 /**
  * Created by jmorales on 18/08/16.
  */
-public class MLBPark implements Park{
+public class MLBPark implements DataPoint {
     private Object name;
-    private Object position;
+    private Coordinates position;
+    private Object latitude;
+    private Object longitude;
     private Object id;
     private Object ballpark;
     private Object payroll;
@@ -21,29 +23,29 @@ public class MLBPark implements Park{
 
     @Override
     public Object getLongitude() {
-        return null;
+        return longitude;
     }
 
     @Override
     public void setLongitude(Object longitude) {
-
+        this.longitude = longitude;
     }
 
     @Override
     public Object getLatitude() {
-        return null;
+        return latitude;
     }
 
     @Override
     public void setLatitude(Object latitude) {
-
+        this.latitude = latitude;
     }
 
-    public Object getPosition() {
+    public Coordinates getPosition() {
         return position;
     }
 
-    public void setPosition(Object position) {
+    public void setPosition(Coordinates position) {
         this.position = position;
     }
 

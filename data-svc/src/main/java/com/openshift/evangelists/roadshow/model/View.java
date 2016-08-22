@@ -5,8 +5,9 @@ package com.openshift.evangelists.roadshow.model;
  */
 public class View{
     private String title;
-    private String latitude;
-    private String longitude;
+
+    private Coordinates center;
+
     private int zoom;
 
     public View() {
@@ -14,8 +15,7 @@ public class View{
 
     public View(String title, String latitude, String longitude, int zoom) {
         this.title = title;
-        this.latitude = latitude;
-        this.longitude = longitude;
+        this.center = new Coordinates(latitude,longitude);
         this.zoom = zoom;
     }
 
@@ -24,19 +24,27 @@ public class View{
     public void setTitle(String title) { this.title = title; }
 
     public String getLatitude() {
-        return latitude;
+        return center.getLatitude();
     }
 
     public void setLatitude(String latitude) {
-        this.latitude = latitude;
+        center.setLatitude(latitude);
     }
 
     public String getLongitude() {
-        return longitude;
+        return center.getLongitude();
     }
 
     public void setLongitude(String longitude) {
-        this.longitude = longitude;
+        center.setLongitude(longitude);
+    }
+
+    public Coordinates getCenter() {
+        return center;
+    }
+
+    public void setCenter(Coordinates center) {
+        this.center = center;
     }
 
     public int getZoom() {
@@ -51,8 +59,7 @@ public class View{
     public String toString() {
         return "View{" +
                 "title='" + title + '\'' +
-                ", latitude='" + latitude + '\'' +
-                ", longitude='" + longitude + '\'' +
+                ", center='" + center + '\'' +
                 ", zoom=" + zoom +
                 '}';
     }

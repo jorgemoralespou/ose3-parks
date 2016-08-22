@@ -1,8 +1,7 @@
 package com.openshift.evangelists.roadshow.rest;
 
-import com.openshift.evangelists.roadshow.model.DefaultPark;
-import com.openshift.evangelists.roadshow.model.Park;
-import com.openshift.evangelists.roadshow.model.View;
+import com.openshift.evangelists.roadshow.model.DataPoint;
+import com.openshift.evangelists.roadshow.model.DefaultDataPoint;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.QueryParam;
@@ -15,30 +14,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-public class DefaultResource implements ParksResource {
+public class DefaultResource implements DataPointsResource {
 
 
-    private ArrayList<Park> exampleParkList = new ArrayList<Park>();
-    private ArrayList<Park> emptyList = new ArrayList<Park>();
-    private View exampleView = new View("Example map on OpenShift 3", "39.82", "-98.57", 5);
+    private ArrayList<DataPoint> exampleDataPointList = new ArrayList<DataPoint>();
+    private ArrayList<DataPoint> emptyList = new ArrayList<DataPoint>();
 
-    String parkService = System.getenv("PARKS_SERVICE");
+    String remoteService = System.getenv("DATA_SERVICE");
 
     Client client = ClientBuilder.newClient();
 
     public DefaultResource() {
-        exampleParkList.add(new DefaultPark("1", "Example", "33.80003", "-117.883043"));
-        exampleParkList.add(new DefaultPark("1", "Example2", "40.446947", "-80.005666"));
+        exampleDataPointList.add(new DefaultDataPoint("1", "Example", "33.80003", "-117.883043"));
+        exampleDataPointList.add(new DefaultDataPoint("1", "Example2", "40.446947", "-80.005666"));
     }
 
-    public List<Park> getAllParks() {
-        System.out.println("[DEBUG] getAllParks");
+    public List<? extends DataPoint> getAllDataPoints() {
+        System.out.println("[DEBUG] getAllDataPoints");
 
-        if (parkService != null) {
-            Response res = client.target("http://" + parkService + "/ws/parks/").request(MediaType.APPLICATION_JSON).get();
+        if (remoteService != null) {
+            Response res = client.target("http://" + remoteService + "/ws/data/").request(MediaType.APPLICATION_JSON).get();
             if (res.getStatus() == 200) {
                 System.out.println("[INFO] Remote service responded ok: " + res);
-                return (List<Park>) res.readEntity(new GenericType<List<Park>>() {});
+                return (List<DefaultDataPoint>) res.readEntity(new GenericType<List<DefaultDataPoint>>() {
+                });
             } else {
                 System.out.println("[INFO] Remote service not available, using defaults");
             }
@@ -49,17 +48,18 @@ public class DefaultResource implements ParksResource {
     }
 
 
-    public List<Park> findParksWithin(@QueryParam("lat1") float lat1,
-                                      @QueryParam("lon1") float lon1,
-                                      @QueryParam("lat2") float lat2,
-                                      @QueryParam("lon2") float lon2) {
-        System.out.println("[DEBUG] findParksWithin(" + lat1 + "," + lon1 + "," + lat2 + "," + lon2 + ")");
+    public List<? extends DataPoint> findDataPointsWithin(@QueryParam("lat1") float lat1,
+                                                          @QueryParam("lon1") float lon1,
+                                                          @QueryParam("lat2") float lat2,
+                                                          @QueryParam("lon2") float lon2) {
+        System.out.println("[DEBUG] findDataPointsWithin(" + lat1 + "," + lon1 + "," + lat2 + "," + lon2 + ")");
 
-        if (parkService != null) {
-            Response res = client.target("http://" + parkService + "/ws/parks/within").request(MediaType.APPLICATION_JSON).get();
+        if (remoteService != null) {
+            Response res = client.target("http://" + remoteService + "/ws/data/within?lat1=" + lat1 + "&lon1=" + lon1 + "&lat2=" + lat2 + "&lon2=" + lon2).request(MediaType.APPLICATION_JSON).get();
             if (res.getStatus() == 200) {
                 System.out.println("[INFO] Remote service responded ok: " + res);
-                return (List<Park>) res.readEntity(new GenericType<List<Park>>() {});
+                return (List<DefaultDataPoint>) res.readEntity(new GenericType<List<DefaultDataPoint>>() {
+                });
             } else {
                 System.out.println("[INFO] Remote service not available, using defaults");
             }
@@ -69,22 +69,10 @@ public class DefaultResource implements ParksResource {
         return emptyList;
     }
 
-    @Override
-    public View getInitialView() {
-        System.out.println("[DEBUG] getInitialView");
 
-        if (parkService != null) {
-            // TODO: Set a timeout of 1 second, at most
-            Response res = client.target("http://" + parkService + "/ws/parks/initialview").request(MediaType.APPLICATION_JSON).get();
-            if (res.getStatus() == 200) {
-                System.out.println("[INFO] Remote service responded ok: " + res);
-                return (View) res.readEntity(View.class);
-            } else {
-                System.out.println("[INFO] Remote service not available, using defaults");
-            }
-        } else {
-            System.out.println("[INFO] Remote service not specified, using defaults");
-        }
-        return exampleView;
+    public List<DataPoint> findDataPointsCentered(float lat, float lon, int maxDistance, int minDistance) {
+        // TODO: Implement this
+        return null;
     }
+
 }

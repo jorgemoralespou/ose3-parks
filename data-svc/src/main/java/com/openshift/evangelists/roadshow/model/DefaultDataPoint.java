@@ -1,19 +1,21 @@
 package com.openshift.evangelists.roadshow.model;
 
 /**
+ *
  * Created by jmorales on 19/08/16.
  */
-public class DefaultPark implements Park {
+public class DefaultDataPoint implements DataPoint {
 
     private Object id;
     private Object name;
+    private Coordinates position;
     private Object longitude;
     private Object latitude;
 
-    public DefaultPark() {
+    public DefaultDataPoint() {
     }
 
-    public DefaultPark(String id, String name, String latitude, String longitude) {
+    public DefaultDataPoint(String id, String name, String latitude, String longitude) {
         this.id = id;
         this.name = name;
         this.latitude = latitude;
@@ -41,6 +43,16 @@ public class DefaultPark implements Park {
     }
 
     @Override
+    public Coordinates getPosition() {
+        return position;
+    }
+
+    @Override
+    public void setPosition(Coordinates position) {
+        this.position = position;
+    }
+
+    @Override
     public Object getLongitude() {
         return longitude;
     }
@@ -62,7 +74,7 @@ public class DefaultPark implements Park {
 
     @Override
     public String toString() {
-        return "DefaultPark{" +
+        return "DefaultDataPoint{" +
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", longitude='" + longitude + '\'' +
