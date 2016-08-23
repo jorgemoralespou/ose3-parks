@@ -5,8 +5,12 @@ import com.mongodb.client.MongoDatabase;
 import com.openshift.evangelists.roadshow.db.MongoDBConnection;
 import com.openshift.evangelists.roadshow.model.DataPoint;
 import com.openshift.evangelists.roadshow.model.View;
+import org.bson.Document;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +23,16 @@ public class MLBParks implements DataPointsResource {
 	//@Inject
 	//private DBConnection dbConnection;
 
+	@GET∫
+	@Path("/load")
+	public String load(){
+		System.out.println("[INFO] load()");
+		MongoDBConnection con = new MongoDBConnection();
+		List<Document> parks = con.loadParks();
+		MongoDatabase db = con.connect();
+		con.init(db, parks);
+		return "Items inserted in database: " + con.sizeInDB(db);
+	}
 
 	public List<? extends DataPoint> getAllDataPoints() {
 		System.out.println("[DEBUG] getAllDataPoints");

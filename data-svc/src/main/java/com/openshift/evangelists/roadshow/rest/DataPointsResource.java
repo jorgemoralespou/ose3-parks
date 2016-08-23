@@ -15,6 +15,10 @@ import java.util.List;
 @Path("/data")
 public interface DataPointsResource {
 
+    @GET
+    @Path("/load")
+    public String load();
+
     /**
      *
      * @return

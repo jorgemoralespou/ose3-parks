@@ -22,12 +22,12 @@ public class NationalParks implements DataPointsResource {
 
     MongoDBConnection con = new MongoDBConnection();
 
-    @GET
-    @Produces("text/json")
+    @GET∫
     @Path("/load")
     public String load(){
+        System.out.println("[INFO] load()");
         MongoDBConnection con = new MongoDBConnection();
-        List<Document> parks = con.loadParks("/Users/jmorales/repositories/jorgemoralespou/openshift/roadshow-mongodb/src/main/rest/national-parks-all.json");
+        List<Document> parks = con.loadParks();
         MongoDatabase db = con.connect();
         con.init(db, parks);
         return "Items inserted in database: " + con.sizeInDB(db);
@@ -36,6 +36,7 @@ public class NationalParks implements DataPointsResource {
     @DELETE
     @Produces("text/json")
     public String delete(){
+        System.out.println("[INFO] delete()");
         MongoDBConnection con = new MongoDBConnection();
         MongoDatabase db = con.connect();
         con.clear(db);
@@ -46,6 +47,7 @@ public class NationalParks implements DataPointsResource {
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAll(){
+        System.out.println("[INFO] getAll()");
         MongoDBConnection con = new MongoDBConnection();
         MongoDatabase db = con.connect();
         List<DataPoint> dataPoints = con.getAll(db);

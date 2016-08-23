@@ -4,6 +4,8 @@ import com.openshift.evangelists.roadshow.model.DataPoint;
 import com.openshift.evangelists.roadshow.model.DefaultDataPoint;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -25,8 +27,14 @@ public class DefaultResource implements DataPointsResource {
     Client client = ClientBuilder.newClient();
 
     public DefaultResource() {
+    }
+
+    @GET
+    @Path("/load")
+    public String load(){
         exampleDataPointList.add(new DefaultDataPoint("1", "Example", "33.80003", "-117.883043"));
         exampleDataPointList.add(new DefaultDataPoint("1", "Example2", "40.446947", "-80.005666"));
+        return "Items inserted in database: 2";
     }
 
     public List<? extends DataPoint> getAllDataPoints() {
