@@ -2,16 +2,161 @@
   "kind": "Template",
   "apiVersion": "v1",
   "metadata": {
-    "name": "parks-map"
+    "name": "webmap-parks-wildfly",
+    "annotations": {
+      "iconClass": "icon-jboss",
+      "description": "Application template for a Web that shows Map of different backend services displaying Parks (MLB or NationalParks) on WildFly & MongoDB built using STI"
+    }
   },
+  "labels": {
+    "application": "webmap-parks-wildfly",
+    "createdBy": "webmap-parks-wildfly-template"
+  },
+  "parameters": [
+    {
+      "description": "The name for the Web application.",
+      "displayName": "WebMap app",
+      "name": "WEB_APPLICATION_NAME",
+      "value": "web",
+      "required": true
+    },
+    {
+      "description": "The name for the MLBParks application.",
+      "displayName": "MLBParks app",
+      "name": "MLBPARKS_APPLICATION_NAME",
+      "value": "mlbparks",
+      "required": true
+    },
+    {
+      "description": "The name for the NationalParks application.",
+      "displayName": "NationalParks app",
+      "name": "NATIONALPARKS_APPLICATION_NAME",
+      "value": "nationalparks",
+      "required": true
+    },
+    {
+      "description": "The name of the service that will decide which backed to use. Modify the selector on this service to go to a different backend",
+      "displayName": "Data Service",
+      "name": "DATA_SVC",
+      "value": "backend",
+      "required": true
+    },
+    {
+      "description": "The name for the mongodb application.",
+      "displayName": "Mongodb App",
+      "name": "MONGODB_APPLICATION_NAME",
+      "value": "mongodb",
+      "required": true
+    },
+    {
+      "description": "Custom hostname for the main Web application.  Leave blank for default hostname, e.g.: <application-name>.<project>.<default-domain-suffix>",
+      "displayName": "Web app route",
+      "name": "WEB_APPLICATION_HOSTNAME"
+    },
+    {
+      "description": "Git source URI for application",
+      "displayName": "Git source repository",
+      "name": "GIT_URI",
+      "value": "https://github.com/jorgemoralespou/ose3-parks.git",
+      "required": true
+    },
+    {
+      "description": "Git branch/tag reference",
+      "displayName": "Git branch/tag reference",
+      "name": "GIT_REF",
+      "value": "master",
+      "required": true
+    },
+    {
+      "description": "Maven mirror url. If nexus is deployed locally, use nexus url (e.g. http://nexus.ci.apps.10.2.2.2.xip.io/content/groups/public/)",
+      "displayName": "Maven mirror url",
+      "name": "MAVEN_MIRROR_URL",
+      "required": false
+    },
+    {
+      "description": "Database name",
+      "displayName": "Database name",
+      "name": "MONGODB_DATABASE",
+      "value": "mongodb",
+      "required": true
+    },
+    {
+      "description": "Disable data file preallocation.",
+      "name": "MONGODB_NOPREALLOC"
+    },
+    {
+      "description": "Set MongoDB to use a smaller default data file size.",
+      "name": "MONGODB_SMALLFILES"
+    },
+    {
+      "description": "Runs MongoDB in a quiet mode that attempts to limit the amount of output.",
+      "name": "MONGODB_QUIET"
+    },
+    {
+      "description": "Database user name",
+      "displayName": "Database user name",
+      "name": "MONGODB_USER",
+      "from": "user[a-zA-Z0-9]{3}",
+      "generate": "expression",
+      "required": true
+    },
+    {
+      "description": "Database user password",
+      "displayName": "Database user password",
+      "name": "MONGODB_PASSWORD",
+      "from": "[a-zA-Z0-9]{8}",
+      "generate": "expression",
+      "required": true
+    },
+    {
+      "description": "Database admin password",
+      "displayName": "Database admin password",
+      "name": "MONGODB_ADMIN_PASSWORD",
+      "from": "[a-zA-Z0-9]{8}",
+      "generate": "expression",
+      "required": true
+    },
+    {
+      "description": "Github trigger secret",
+      "displayName": "GitHub Trigger",
+      "name": "GITHUB_TRIGGER_SECRET",
+      "from": "[a-zA-Z0-9]{8}",
+      "generate": "expression",
+      "required": true
+    },
+    {
+      "description": "Generic build trigger secret",
+      "displayName": "Generic Trigger",
+      "name": "GENERIC_TRIGGER_SECRET",
+      "from": "[a-zA-Z0-9]{8}",
+      "generate": "expression",
+      "required": true
+    }
+  ],
   "objects": [
+    {
+      "kind": "ConfigMap",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "config",
+        "labels": {
+          "component": "config"
+        }
+      },
+      "data": {
+        "db.user": "${MONGODB_USER}",
+        "db.password": "${MONGODB_PASSWORD}",
+        "db.name": "${MONGODB_DATABASE}",
+        "db.properties": "db.user=${MONGODB_USER}\ndb.password=${MONGODB_PASSWORD}\ndb.name=${MONGODB_DATABASE}"
+      }
+    },
     {
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mongodb",
+        "name": "${MONGODB_APPLICATION_NAME}",
         "labels": {
-          "component": "mongodb"
+          "component": "${MONGODB_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -24,7 +169,7 @@
           }
         ],
         "selector": {
-          "name": "mongodb"
+          "name": "${MONGODB_APPLICATION_NAME}"
         },
         "type": "ClusterIP",
         "sessionAffinity": "None"
@@ -34,9 +179,9 @@
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mongodb",
+        "name": "${MONGODB_APPLICATION_NAME}",
         "labels": {
-          "component": "mongodb"
+          "component": "${MONGODB_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -53,7 +198,7 @@
             "imageChangeParams": {
               "automatic": true,
               "containerNames": [
-                "mongodb"
+                "${MONGODB_APPLICATION_NAME}"
               ],
               "from": {
                 "kind": "ImageStreamTag",
@@ -69,12 +214,12 @@
         "replicas": 1,
         "test": false,
         "selector": {
-          "name": "mongodb"
+          "name": "${MONGODB_APPLICATION_NAME}"
         },
         "template": {
           "metadata": {
             "labels": {
-              "name": "mongodb"
+              "name": "${MONGODB_APPLICATION_NAME}"
             }
           },
           "spec": {
@@ -86,8 +231,8 @@
             ],
             "containers": [
               {
-                "name": "mongodb",
-                "image": "mongodb",
+                "name": "${MONGODB_APPLICATION_NAME}",
+                "image": "${MONGODB_APPLICATION_NAME}",
                 "ports": [
                   {
                     "containerPort": 27017,
@@ -97,19 +242,34 @@
                 "env": [
                   {
                     "name": "MONGODB_USER",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.user"
+                      }
+                    }
                   },
                   {
                     "name": "MONGODB_PASSWORD",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.password"
+                      }
+                    }
                   },
                   {
                     "name": "MONGODB_DATABASE",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.name"
+                      }
+                    }
                   },
                   {
                     "name": "MONGODB_ADMIN_PASSWORD",
-                    "value": "mongodb"
+                    "value": "${MONGODB_ADMIN_USER}"
                   }
                 ],
                 "resources": {
@@ -168,7 +328,7 @@
       "kind": "ImageStream",
       "apiVersion": "v1",
       "metadata": {
-        "name": "web"
+        "name": "${WEB_APPLICATION_NAME}"
       },
       "spec": {
         "tags": [
@@ -182,9 +342,9 @@
       "kind": "BuildConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "web",
+        "name": "${WEB_APPLICATION_NAME}",
         "labels": {
-          "build": "web"
+          "build": "${WEB_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -192,13 +352,13 @@
           {
             "type": "GitHub",
             "github": {
-              "secret": "secret101"
+              "secret": "${GITHUB_TRIGGER_SECRET}"
             }
           },
           {
             "type": "Generic",
             "generic": {
-              "secret": "secret101"
+              "secret": "${GENERIC_TRIGGER_SECRET}"
             }
           }
         ],
@@ -206,8 +366,8 @@
         "source": {
           "type": "Git",
           "git": {
-            "uri": "https://github.com/jorgemoralespou/ose3-parks.git",
-            "ref": "master"
+            "uri": "${GIT_URI}",
+            "ref": "${GIT_REF}"
           }
         },
         "strategy": {
@@ -226,6 +386,10 @@
               {
                 "name": "ARTIFACT_DIR",
                 "value": "web-svc/target"
+              },
+              {
+                "name": "MAVEN_MIRROR_URL",
+                "value": "${MAVEN_MIRROR_URL}"
               }
             ],
             "incremental": true
@@ -234,7 +398,7 @@
         "output": {
           "to": {
             "kind": "ImageStreamTag",
-            "name": "web:latest"
+            "name": "${WEB_APPLICATION_NAME}:latest"
           }
         },
         "resources": {},
@@ -245,9 +409,9 @@
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "web",
+        "name": "${WEB_APPLICATION_NAME}",
         "labels": {
-          "component": "web"
+          "component": "${WEB_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -271,11 +435,11 @@
             "imageChangeParams": {
               "automatic": true,
               "containerNames": [
-                "web"
+                "${WEB_APPLICATION_NAME}"
               ],
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "web:latest"
+                "name": "${WEB_APPLICATION_NAME}:latest"
               }
             }
           }
@@ -283,25 +447,29 @@
         "replicas": 1,
         "test": false,
         "selector": {
-          "component": "web",
-          "deploymentconfig": "web"
+          "component": "${WEB_APPLICATION_NAME}"
         },
         "template": {
           "metadata": {
             "labels": {
-              "component": "web",
-              "deploymentconfig": "web"
+              "component": "${WEB_APPLICATION_NAME}"
             }
           },
           "spec": {
             "containers": [
               {
-                "name": "web",
-                "image": "web",
+                "name": "${WEB_APPLICATION_NAME}",
+                "image": "${WEB_APPLICATION_NAME}",
                 "ports": [
                   {
                     "containerPort": 8080,
                     "protocol": "TCP"
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "DATA_SERVICE",
+                    "value": "${DATA_SVC}:8080"
                   }
                 ],
                 "resources": {},
@@ -345,12 +513,12 @@
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "web",
+        "name": "${WEB_APPLICATION_NAME}",
         "labels": {
-          "component": "web"
+          "component": "${WEB_APPLICATION_NAME}"
         },
         "annotations": {
-          "service.alpha.openshift.io/dependencies": "[{\"name\":\"mlbparks\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"nationalparks\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"mongodb\",\"namespace\":\"\",\"kind\":\"Service\"}]"
+          "service.alpha.openshift.io/dependencies": "[{\"name\":\"${MLBPARKS_APPLICATION_NAME}\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"${NATIONALPARKS_APPLICATION_NAME}\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"${MONGODB_APPLICATION_NAME}\",\"namespace\":\"\",\"kind\":\"Service\"}]"
         }
       },
       "spec": {
@@ -363,8 +531,7 @@
           }
         ],
         "selector": {
-          "component": "web",
-          "deploymentconfig": "web"
+          "component": "${WEB_APPLICATION_NAME}"
         },
         "type": "ClusterIP",
         "sessionAffinity": "None"
@@ -374,16 +541,16 @@
       "kind": "Route",
       "apiVersion": "v1",
       "metadata": {
-        "name": "web",
+        "name": "${WEB_APPLICATION_NAME}",
         "labels": {
-          "component": "web"
+          "component": "${WEB_APPLICATION_NAME}"
         }
       },
       "spec": {
-        "host": "",
+        "host": "${WEB_APPLICATION_HOSTNAME}",
         "to": {
           "kind": "Service",
-          "name": "web",
+          "name": "${WEB_APPLICATION_NAME}",
           "weight": 100
         },
         "port": {
@@ -395,7 +562,7 @@
       "kind": "ImageStream",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nationalparks"
+        "name": "${NATIONALPARKS_APPLICATION_NAME}"
       },
       "spec": {
         "tags": [
@@ -409,9 +576,9 @@
       "kind": "BuildConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nationalparks",
+        "name": "${NATIONALPARKS_APPLICATION_NAME}",
         "labels": {
-          "build": "nationalparks"
+          "build": "${NATIONALPARKS_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -419,13 +586,13 @@
           {
             "type": "GitHub",
             "github": {
-              "secret": "secret101"
+              "secret": "${GITHUB_TRIGGER_SECRET}"
             }
           },
           {
             "type": "Generic",
             "generic": {
-              "secret": "secret101"
+              "secret": "${GENERIC_TRIGGER_SECRET}"
             }
           }
         ],
@@ -433,8 +600,8 @@
         "source": {
           "type": "Git",
           "git": {
-            "uri": "https://github.com/jorgemoralespou/ose3-parks.git",
-            "ref": "master"
+            "uri": "${GIT_URI}",
+            "ref": "${GIT_REF}"
           }
         },
         "strategy": {
@@ -453,6 +620,10 @@
               {
                 "name": "ARTIFACT_DIR",
                 "value": "nationalparks-mongo/target"
+              },
+              {
+                "name": "MAVEN_MIRROR_URL",
+                "value": "${MAVEN_MIRROR_URL}"
               }
             ],
             "incremental": true
@@ -461,7 +632,7 @@
         "output": {
           "to": {
             "kind": "ImageStreamTag",
-            "name": "nationalparks:latest"
+            "name": "${NATIONALPARKS_APPLICATION_NAME}:latest"
           }
         },
         "resources": {},
@@ -472,9 +643,9 @@
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nationalparks",
+        "name": "${NATIONALPARKS_APPLICATION_NAME}",
         "labels": {
-          "component": "nationalparks"
+          "component": "${NATIONALPARKS_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -485,7 +656,18 @@
             "intervalSeconds": 1,
             "timeoutSeconds": 600,
             "maxUnavailable": "25%",
-            "maxSurge": "25%"
+            "maxSurge": "25%",
+            "post": {
+              "failurePolicy": "Retry",
+              "execNewPod": {
+                "command": [
+                  "curl",
+                  "http://${NATIONALPARKS_APPLICATION_NAME}:8080/ws/data/load"
+                ],
+                "containerName": "${NATIONALPARKS_APPLICATION_NAME}"
+              }
+            }
+
           },
           "resources": {}
         },
@@ -498,11 +680,11 @@
             "imageChangeParams": {
               "automatic": true,
               "containerNames": [
-                "nationalparks"
+                "${NATIONALPARKS_APPLICATION_NAME}"
               ],
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "nationalparks:latest"
+                "name": "${NATIONALPARKS_APPLICATION_NAME}:latest"
               }
             }
           }
@@ -510,21 +692,19 @@
         "replicas": 1,
         "test": false,
         "selector": {
-          "component": "nationalparks",
-          "deploymentconfig": "nationalparks"
+          "component": "${NATIONALPARKS_APPLICATION_NAME}"
         },
         "template": {
           "metadata": {
             "labels": {
-              "component": "nationalparks",
-              "deploymentconfig": "nationalparks"
+              "component": "${NATIONALPARKS_APPLICATION_NAME}"
             }
           },
           "spec": {
             "containers": [
               {
-                "name": "nationalparks",
-                "image": "nationalparks",
+                "name": "${NATIONALPARKS_APPLICATION_NAME}",
+                "image": "${NATIONALPARKS_APPLICATION_NAME}",
                 "ports": [
                   {
                     "containerPort": 8080,
@@ -534,7 +714,7 @@
                 "env": [
                   {
                     "name": "DB_HOST",
-                    "value": "mongodb"
+                    "value": "${MONGODB_APPLICATION_NAME}"
                   },
                   {
                     "name": "DB_PORT",
@@ -542,15 +722,30 @@
                   },
                   {
                     "name": "DB_USERNAME",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.user"
+                      }
+                    }
                   },
                   {
                     "name": "DB_PASSWORD",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.password"
+                      }
+                    }
                   },
                   {
                     "name": "DB_NAME",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.name"
+                      }
+                    }
                   }
                 ],
                 "resources": {},
@@ -594,9 +789,9 @@
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nationalparks",
+        "name": "${NATIONALPARKS_APPLICATION_NAME}",
         "labels": {
-          "component": "nationalparks"
+          "component": "${NATIONALPARKS_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -609,8 +804,7 @@
           }
         ],
         "selector": {
-          "component": "nationalparks",
-          "deploymentconfig": "nationalparks"
+          "component": "${NATIONALPARKS_APPLICATION_NAME}"
         },
         "type": "ClusterIP",
         "sessionAffinity": "None"
@@ -620,16 +814,16 @@
       "kind": "Route",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nationalparks",
+        "name": "${NATIONALPARKS_APPLICATION_NAME}",
         "labels": {
-          "component": "nationalparks"
+          "component": "${NATIONALPARKS_APPLICATION_NAME}"
         }
       },
       "spec": {
         "host": "",
         "to": {
           "kind": "Service",
-          "name": "nationalparks",
+          "name": "${NATIONALPARKS_APPLICATION_NAME}",
           "weight": 100
         },
         "port": {
@@ -641,7 +835,7 @@
       "kind": "ImageStream",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mlbparks"
+        "name": "${MLBPARKS_APPLICATION_NAME}"
       },
       "spec": {
         "tags": [
@@ -655,9 +849,9 @@
       "kind": "BuildConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mlbparks",
+        "name": "${MLBPARKS_APPLICATION_NAME}",
         "labels": {
-          "build": "mlbparks"
+          "build": "${MLBPARKS_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -665,13 +859,13 @@
           {
             "type": "GitHub",
             "github": {
-              "secret": "secret101"
+              "secret": "${GITHUB_TRIGGER_SECRET}"
             }
           },
           {
             "type": "Generic",
             "generic": {
-              "secret": "secret101"
+              "secret": "${GENERIC_TRIGGER_SECRET}"
             }
           }
         ],
@@ -679,8 +873,8 @@
         "source": {
           "type": "Git",
           "git": {
-            "uri": "https://github.com/jorgemoralespou/ose3-parks.git",
-            "ref": "master"
+            "uri": "${GIT_URI}",
+            "ref": "${GIT_REF}"
           }
         },
         "strategy": {
@@ -699,6 +893,10 @@
               {
                 "name": "ARTIFACT_DIR",
                 "value": "mlbparks-mongo/target"
+              },
+              {
+                "name": "MAVEN_MIRROR_URL",
+                "value": "${MAVEN_MIRROR_URL}"
               }
             ],
             "incremental": true
@@ -707,7 +905,7 @@
         "output": {
           "to": {
             "kind": "ImageStreamTag",
-            "name": "mlbparks:latest"
+            "name": "${MLBPARKS_APPLICATION_NAME}:latest"
           }
         },
         "resources": {},
@@ -718,9 +916,9 @@
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mlbparks",
+        "name": "${MLBPARKS_APPLICATION_NAME}",
         "labels": {
-          "component": "mlbparks"
+          "component": "${MLBPARKS_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -731,7 +929,18 @@
             "intervalSeconds": 1,
             "timeoutSeconds": 600,
             "maxUnavailable": "25%",
-            "maxSurge": "25%"
+            "maxSurge": "25%",
+            "post": {
+              "failurePolicy": "Retry",
+              "execNewPod": {
+                "command": [
+                  "curl",
+                  "http://${MLBPARKS_APPLICATION_NAME}:8080/ws/data/load"
+                ],
+                "containerName": "${MLBPARKS_APPLICATION_NAME}"
+              }
+            }
+
           },
           "resources": {}
         },
@@ -744,11 +953,11 @@
             "imageChangeParams": {
               "automatic": true,
               "containerNames": [
-                "mlbparks"
+                "${MLBPARKS_APPLICATION_NAME}"
               ],
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "mlbparks:latest"
+                "name": "${MLBPARKS_APPLICATION_NAME}:latest"
               }
             }
           }
@@ -756,21 +965,19 @@
         "replicas": 1,
         "test": false,
         "selector": {
-          "component": "mlbparks",
-          "deploymentconfig": "mlbparks"
+          "component": "${MLBPARKS_APPLICATION_NAME}"
         },
         "template": {
           "metadata": {
             "labels": {
-              "component": "mlbparks",
-              "deploymentconfig": "mlbparks"
+              "component": "${MLBPARKS_APPLICATION_NAME}"
             }
           },
           "spec": {
             "containers": [
               {
-                "name": "mlbparks",
-                "image": "mlbparks",
+                "name": "${MLBPARKS_APPLICATION_NAME}",
+                "image": "${MLBPARKS_APPLICATION_NAME}",
                 "ports": [
                   {
                     "containerPort": 8080,
@@ -780,7 +987,7 @@
                 "env": [
                   {
                     "name": "DB_HOST",
-                    "value": "mongodb"
+                    "value": "${MONGODB_APPLICATION_NAME}"
                   },
                   {
                     "name": "DB_PORT",
@@ -788,15 +995,30 @@
                   },
                   {
                     "name": "DB_USERNAME",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.user"
+                      }
+                    }
                   },
                   {
                     "name": "DB_PASSWORD",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.password"
+                      }
+                    }
                   },
                   {
                     "name": "DB_NAME",
-                    "value": "mongodb"
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "name": "config",
+                        "key": "db.name"
+                      }
+                    }
                   }
                 ],
                 "resources": {},
@@ -840,9 +1062,9 @@
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mlbparks",
+        "name": "${MLBPARKS_APPLICATION_NAME}",
         "labels": {
-          "component": "mlbparks"
+          "component": "${MLBPARKS_APPLICATION_NAME}"
         }
       },
       "spec": {
@@ -855,8 +1077,7 @@
           }
         ],
         "selector": {
-          "component": "mlbparks",
-          "deploymentconfig": "mlbparks"
+          "component": "${MLBPARKS_APPLICATION_NAME}"
         },
         "type": "ClusterIP",
         "sessionAffinity": "None"
@@ -866,21 +1087,46 @@
       "kind": "Route",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mlbparks",
+        "name": "${MLBPARKS_APPLICATION_NAME}",
         "labels": {
-          "component": "mlbparks"
+          "component": "${MLBPARKS_APPLICATION_NAME}"
         }
       },
       "spec": {
         "host": "",
         "to": {
           "kind": "Service",
-          "name": "mlbparks",
+          "name": "${MLBPARKS_APPLICATION_NAME}",
           "weight": 100
         },
         "port": {
           "targetPort": "8080-tcp"
         }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${DATA_SVC}",
+        "labels": {
+          "component": "${DATA_SVC}"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "8080-tcp",
+            "protocol": "TCP",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "component": "${MLBPARKS_APPLICATION_NAME}"
+        },
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
       }
     }
   ]
