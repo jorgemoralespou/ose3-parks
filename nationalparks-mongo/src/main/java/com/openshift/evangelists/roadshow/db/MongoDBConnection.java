@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class MongoDBConnection {
 
-    private static final String FILENAME = "/resources/national-parks-coordinates-all.json";
+    private static final String FILENAME = "/national-parks-coordinates-all.json";
 
     private static final String COLLECTION = "nationalparks";
 
@@ -32,6 +32,8 @@ public class MongoDBConnection {
     String dbName = System.getenv("DB_NAME");
 
     public MongoDatabase connect(){
+        System.out.println("[DEBUG] MongoDBConnection.connect()");
+
         List<MongoCredential> creds = new ArrayList<MongoCredential>();
         creds.add(MongoCredential.createCredential(dbUsername,dbName,dbPassword.toCharArray()));
 
@@ -45,6 +47,8 @@ public class MongoDBConnection {
      * Load from embedded list of parks using FILENAME
      */
     public List<Document>  loadParks(){
+        System.out.println("[DEBUG] MongoDBConnection.loadParks()");
+
         List<Document> docs = new ArrayList<Document>();
 
         try {
@@ -57,6 +61,8 @@ public class MongoDBConnection {
 
 
     public List<Document>  loadParks(String fileLocation){
+        System.out.println("[DEBUG] MongoDBConnection.loadParks("+fileLocation+")");
+
         List<Document> docs = new ArrayList<Document>();
         try {
             docs.addAll(loadParks(new FileInputStream(new File(fileLocation))));
@@ -67,6 +73,7 @@ public class MongoDBConnection {
     }
 
     public List<Document> loadParks(InputStream is){
+        System.out.println("[DEBUG] MongoDBConnection.loadParks(InputStream)");
         List<Document> docs = new ArrayList<Document>();
         String currentLine = null;
         int i = 1;
@@ -91,6 +98,7 @@ public class MongoDBConnection {
      * @param database
      */
     public void clear(MongoDatabase database) {
+        System.out.println("[DEBUG] MongoDBConnection.clear()");
         MongoCollection<Document> collection = this.getCollection(database);
         collection.drop();
     }
@@ -110,6 +118,8 @@ public class MongoDBConnection {
      * @param parks
      */
     public void init(MongoDatabase database, List<Document> parks) {
+        System.out.println("[DEBUG] MongoDBConnection.init(...)");
+
         MongoCollection<Document> collection = this.getCollection(database);
 
         System.out.println("Items before insert: " + collection.count());
@@ -152,6 +162,8 @@ public class MongoDBConnection {
      * @return
      */
     public List<DataPoint> getAll(MongoDatabase database){
+        System.out.println("[DEBUG] MongoDBConnection.getAll()");
+
         int i = 0;
         FindIterable<Document> iterable = this.getCollection(database).find();
         List<DataPoint> dataPoints = new ArrayList<DataPoint>();
@@ -164,6 +176,8 @@ public class MongoDBConnection {
     }
 
     public List<DataPoint> getByQuery(MongoDatabase database, BasicDBObject query){
+        System.out.println("[DEBUG] MongoDBConnection.getByQuery()");
+        
         int i=0;
         FindIterable<Document> iterable = this.getCollection(database).find(query);
         List<DataPoint> dataPoints = new ArrayList<DataPoint>();
