@@ -23,7 +23,7 @@ public class MLBParks implements DataPointsResource {
 	//@Inject
 	//private DBConnection dbConnection;
 
-	@GET∫
+	@GET
 	@Path("/load")
 	public String load(){
 		System.out.println("[INFO] load()");

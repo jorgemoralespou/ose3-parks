@@ -22,7 +22,7 @@ public class NationalParks implements DataPointsResource {
 
     MongoDBConnection con = new MongoDBConnection();
 
-    @GET∫
+    @GET
     @Path("/load")
     public String load(){
         System.out.println("[INFO] load()");

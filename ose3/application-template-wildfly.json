@@ -168,24 +168,6 @@
       "kind": "ImageStream",
       "apiVersion": "v1",
       "metadata": {
-        "name": "s2i-java"
-      },
-      "spec": {
-        "tags": [
-          {
-            "name": "latest",
-            "from": {
-              "kind": "DockerImage",
-              "name": "jorgemoralespou/s2i-java"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "kind": "ImageStream",
-      "apiVersion": "v1",
-      "metadata": {
         "name": "web"
       },
       "spec": {
@@ -233,12 +215,13 @@
           "sourceStrategy": {
             "from": {
               "kind": "ImageStreamTag",
-              "name": "s2i-java:latest"
+              "namespace": "openshift",
+              "name": "wildfly:latest"
             },
             "env": [
               {
                 "name": "MAVEN_ARGS",
-                "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,web-svc"
+                "value": "clean package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,web-svc"
               },
               {
                 "name": "ARTIFACT_DIR",
@@ -397,7 +380,7 @@
         }
       },
       "spec": {
-        "host": "web-svc.apps.10.2.2.2.xip.io",
+        "host": "",
         "to": {
           "kind": "Service",
           "name": "web",
@@ -459,12 +442,13 @@
           "sourceStrategy": {
             "from": {
               "kind": "ImageStreamTag",
-              "name": "s2i-java:latest"
+              "namespace": "openshift",
+              "name": "wildfly:latest"
             },
             "env": [
               {
                 "name": "MAVEN_ARGS",
-                "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,nationalparks-mongo"
+                "value": "clean package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,nationalparks-mongo"
               },
               {
                 "name": "ARTIFACT_DIR",
@@ -547,6 +531,28 @@
                     "protocol": "TCP"
                   }
                 ],
+                "env": [
+                  {
+                    "name": "DB_HOST",
+                    "value": "mongodb"
+                  },
+                  {
+                    "name": "DB_PORT",
+                    "value": "27017"
+                  },
+                  {
+                    "name": "DB_USERNAME",
+                    "value": "mongodb"
+                  },
+                  {
+                    "name": "DB_PASSWORD",
+                    "value": "mongodb"
+                  },
+                  {
+                    "name": "DB_NAME",
+                    "value": "mongodb"
+                  }
+                ],
                 "resources": {},
                 "livenessProbe": {
                   "httpGet": {
@@ -620,7 +626,7 @@
         }
       },
       "spec": {
-        "host": "nationalparks.apps.10.2.2.2.xip.io",
+        "host": "",
         "to": {
           "kind": "Service",
           "name": "nationalparks",
@@ -682,12 +688,13 @@
           "sourceStrategy": {
             "from": {
               "kind": "ImageStreamTag",
-              "name": "s2i-java:latest"
+              "namespace": "openshift",
+              "name": "wildfly:latest"
             },
             "env": [
               {
                 "name": "MAVEN_ARGS",
-                "value": "clean install wildfly-swarm:package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,mlbparks-mongo"
+                "value": "clean package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,mlbparks-mongo"
               },
               {
                 "name": "ARTIFACT_DIR",
@@ -770,6 +777,28 @@
                     "protocol": "TCP"
                   }
                 ],
+                "env": [
+                  {
+                    "name": "DB_HOST",
+                    "value": "mongodb"
+                  },
+                  {
+                    "name": "DB_PORT",
+                    "value": "27017"
+                  },
+                  {
+                    "name": "DB_USERNAME",
+                    "value": "mongodb"
+                  },
+                  {
+                    "name": "DB_PASSWORD",
+                    "value": "mongodb"
+                  },
+                  {
+                    "name": "DB_NAME",
+                    "value": "mongodb"
+                  }
+                ],
                 "resources": {},
                 "livenessProbe": {
                   "httpGet": {
@@ -843,7 +872,7 @@
         }
       },
       "spec": {
-        "host": "mlbparks.apps.10.2.2.2.xip.io",
+        "host": "",
         "to": {
           "kind": "Service",
           "name": "mlbparks",
