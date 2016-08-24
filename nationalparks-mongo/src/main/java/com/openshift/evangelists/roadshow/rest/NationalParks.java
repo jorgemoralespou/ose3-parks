@@ -8,7 +8,9 @@ import com.openshift.evangelists.roadshow.model.View;
 import org.bson.Document;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -46,26 +48,32 @@ public class NationalParks implements DataPointsResource {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAll(){
+    public Response getAll(@Context HttpServletResponse response){
         System.out.println("[INFO] getAll()");
         MongoDBConnection con = new MongoDBConnection();
         MongoDatabase db = con.connect();
         List<DataPoint> dataPoints = con.getAll(db);
+
+        response.setHeader("Access-Control-Allow-Origin","*");
+
         return Response.ok(dataPoints).build();
     }
 
 
 
-    public List<DataPoint> getAllDataPoints() {
+    public List<DataPoint> getAllDataPoints(@Context HttpServletResponse response) {
         System.out.println("[DEBUG] getAllDataPoints");
 
         MongoDBConnection con = new MongoDBConnection();
         MongoDatabase db = con.connect();
 
+        response.setHeader("Access-Control-Allow-Origin","*");
+
         return con.getAll(db);
     }
 
-    public List<DataPoint> findDataPointsWithin(@QueryParam("lat1") float lat1,
+    public List<DataPoint> findDataPointsWithin(@Context HttpServletResponse response,
+                                                @QueryParam("lat1") float lat1,
                                            @QueryParam("lon1") float lon1,
                                            @QueryParam("lat2") float lat2,
                                            @QueryParam("lon2") float lon2) {
@@ -87,11 +95,17 @@ public class NationalParks implements DataPointsResource {
         spatialQuery.put("coordinates", new BasicDBObject("$within", boxQuery));
         System.out.println("Using spatial query: " + spatialQuery.toString());
 
+        response.setHeader("Access-Control-Allow-Origin","*");
+
         return con.getByQuery(db, spatialQuery);
     }
 
     @Override
-    public List<DataPoint> findDataPointsCentered(float lat, float lon, int maxDistance, int minDistance) {
+    public List<DataPoint> findDataPointsCentered(@Context HttpServletResponse response,
+                                                  float lat, float lon, int maxDistance, int minDistance) {
+
+        response.setHeader("Access-Control-Allow-Origin","*");
+
         // TODO: Implement
         /*
                 MongoDBConnection con = new MongoDBConnection();

@@ -4,11 +4,13 @@ import com.openshift.evangelists.roadshow.model.DataPoint;
 import com.openshift.evangelists.roadshow.model.DefaultDataPoint;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -26,6 +28,8 @@ public class DefaultResource implements DataPointsResource {
 
     Client client = ClientBuilder.newClient();
 
+    //TODO: Client shuld be close? As otherwise it looks like it does cache the remote service DNS resolution
+
     public DefaultResource() {
     }
 
@@ -37,7 +41,7 @@ public class DefaultResource implements DataPointsResource {
         return "Items inserted in database: 2";
     }
 
-    public List<? extends DataPoint> getAllDataPoints() {
+    public List<? extends DataPoint> getAllDataPoints(@Context HttpServletResponse response) {
         System.out.println("[DEBUG] getAllDataPoints");
 
         if (remoteService != null) {
@@ -52,11 +56,15 @@ public class DefaultResource implements DataPointsResource {
         } else {
             System.out.println("[INFO] Remote service not specified, using defaults");
         }
+
+        response.setHeader("Access-Control-Allow-Origin","*");
+
         return emptyList;
     }
 
 
-    public List<? extends DataPoint> findDataPointsWithin(@QueryParam("lat1") float lat1,
+    public List<? extends DataPoint> findDataPointsWithin(@Context HttpServletResponse response,
+                                                          @QueryParam("lat1") float lat1,
                                                           @QueryParam("lon1") float lon1,
                                                           @QueryParam("lat2") float lat2,
                                                           @QueryParam("lon2") float lon2) {
@@ -74,11 +82,17 @@ public class DefaultResource implements DataPointsResource {
         } else {
             System.out.println("[INFO] Remote service not specified, using defaults");
         }
+
+        response.setHeader("Access-Control-Allow-Origin","*");
+
         return emptyList;
     }
 
 
-    public List<DataPoint> findDataPointsCentered(float lat, float lon, int maxDistance, int minDistance) {
+    public List<DataPoint> findDataPointsCentered(@Context HttpServletResponse response, float lat, float lon, int maxDistance, int minDistance) {
+
+        response.setHeader("Access-Control-Allow-Origin","*");
+
         // TODO: Implement this
         return null;
     }

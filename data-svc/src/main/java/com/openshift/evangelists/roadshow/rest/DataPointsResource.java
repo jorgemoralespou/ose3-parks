@@ -3,10 +3,12 @@ package com.openshift.evangelists.roadshow.rest;
 import com.openshift.evangelists.roadshow.model.DataPoint;
 import com.openshift.evangelists.roadshow.model.View;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import java.util.List;
 
 /**
@@ -25,7 +27,7 @@ public interface DataPointsResource {
      */
     @GET()
     @Produces("application/json")
-    public List<? extends DataPoint> getAllDataPoints();
+    public List<? extends DataPoint> getAllDataPoints(@Context HttpServletResponse response);
 
     /**
      *
@@ -38,7 +40,8 @@ public interface DataPointsResource {
     @GET
     @Produces("application/json")
     @Path("within")
-    public List<? extends DataPoint> findDataPointsWithin(@QueryParam("lat1") float lat1,
+    public List<? extends DataPoint> findDataPointsWithin(@Context HttpServletResponse response,
+                                                          @QueryParam("lat1") float lat1,
                                                      @QueryParam("lon1") float lon1,
                                                      @QueryParam("lat2") float lat2,
                                                      @QueryParam("lon2") float lon2);
@@ -54,7 +57,8 @@ public interface DataPointsResource {
     @GET
     @Produces("application/json")
     @Path("centered")
-    public List<DataPoint> findDataPointsCentered(@QueryParam("lat") float lat,
+    public List<DataPoint> findDataPointsCentered(@Context HttpServletResponse response,
+                                                  @QueryParam("lat") float lat,
                                              @QueryParam("lon") float lon,
                                              @QueryParam("maxDistance") int maxDistance,
                                              @QueryParam("minDistance") int minDistance);

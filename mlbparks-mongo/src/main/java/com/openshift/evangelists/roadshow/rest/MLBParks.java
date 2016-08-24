@@ -8,10 +8,12 @@ import com.openshift.evangelists.roadshow.model.View;
 import org.bson.Document;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,17 +36,19 @@ public class MLBParks implements DataPointsResource {
 		return "Items inserted in database: " + con.sizeInDB(db);
 	}
 
-	public List<? extends DataPoint> getAllDataPoints() {
+	public List<? extends DataPoint> getAllDataPoints(@Context HttpServletResponse response) {
 		System.out.println("[DEBUG] getAllDataPoints");
 
 		MongoDBConnection con = new MongoDBConnection();
 		MongoDatabase db = con.connect();
 
+		response.setHeader("Access-Control-Allow-Origin","*");
+
 		return con.getAll(db);
 	}
 
 
-	public List<? extends DataPoint> findDataPointsWithin(@QueryParam("lat1") float lat1,
+	public List<? extends DataPoint> findDataPointsWithin(@Context HttpServletResponse response, @QueryParam("lat1") float lat1,
 													 @QueryParam("lon1") float lon1,
 													 @QueryParam("lat2") float lat2,
 													 @QueryParam("lon2") float lon2) {
@@ -67,11 +71,15 @@ public class MLBParks implements DataPointsResource {
 		spatialQuery.put("coordinates", new BasicDBObject("$within", boxQuery));
 		System.out.println("Using spatial query: " + spatialQuery.toString());
 
+		response.setHeader("Access-Control-Allow-Origin","*");
+
 		return con.getByQuery(db,spatialQuery);
 	}
 
 	@Override
-	public List<DataPoint> findDataPointsCentered(float lat, float lon, int maxDistance, int minDistance) {
+	public List<DataPoint> findDataPointsCentered(@Context HttpServletResponse response, float lat, float lon, int maxDistance, int minDistance) {
+
+		response.setHeader("Access-Control-Allow-Origin","*");
 		// TODO: Implement this
 		return null;
 	}

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>New Parks on OpenShift 3</title>
+    <link rel="stylesheet" href="leaflet/leaflet.css"/>
+    <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="leaflet/markercluster/MarkerCluster.css"/>
+    <link rel="stylesheet" href="leaflet/markercluster/MarkerCluster.Default.css"/>
+    <script src="leaflet/leaflet.js"></script>
+    <script src="leaflet/markercluster/leaflet.markercluster.js"></script>
+
+    <script src="jquery-3.1.0.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <style type="text/css">
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body, #map {
+            height: 100%;
+            font-family: 'Oswald';
+        }
+
+        .leaflet-container .leaflet-control-zoom {
+            margin-left: 13px;
+            margin-top: 70px;
+        }
+
+        #map {
+            z-index: 1;
+        }
+
+        #title {
+            z-index: 2;
+            position: absolute;
+            left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<h1 id="title" class="title">Parks on OpenShift 3</h1>
+<div id="map"></div>
+
+<script>
+    var mlbParks = new L.markerClusterGroup(); //new L.LayerGroup();
+    var nationalParks = new L.markerClusterGroup();
+
+    var mbAttr = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+                    '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                    'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            mbUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw';
+
+
+    var grayscale = L.tileLayer(mbUrl, {id: 'mapbox.light', attribution: mbAttr}),
+            streets = L.tileLayer(mbUrl, {id: 'mapbox.streets', attribution: mbAttr});
+
+    var map = L.map('map', {
+        center: [39.82, -98.57],
+        zoom: 5,
+        layers: [grayscale, mlbParks, nationalParks]
+    });
+
+    var baseLayers = {
+        "Grayscale": grayscale,
+        "Streets": streets
+    };
+
+    var overlays = {
+        "MLB Parks": mlbParks,
+        "National Parks": nationalParks
+    };
+
+
+    function getMlb(e){
+        url = "http://localhost:8081/ws/data";
+        $.get(url, markMlb, "json");
+    }
+
+    function markMlb(data){
+        for (var i = 0; i < data.length; i++){
+            dataPoint = data[i];
+            var popupInformation = "<b>" + dataPoint.name + "</b></br>";
+            var marker = L.marker([dataPoint.latitude, dataPoint.longitude]).bindPopup(popupInformation);
+            console.log("Data: " + dataPoint.name + " ("+ dataPoint.latitude + "," + dataPoint.longitude + ")=" + popupInformation);
+            marker.addTo(mlbParks);
+        }
+    }
+
+
+    function getMarkers(e){
+        url = "http://localhost:8082/ws/data";
+        $.get(url, markTheMap, "json");
+    }
+
+    function markTheMap(data){
+        for (var i = 0; i < data.length; i++){
+            dataPoint = data[i];
+            var popupInformation = "<b>" + dataPoint.name + "</b></br>";
+            var marker = L.marker([dataPoint.latitude, dataPoint.longitude]).bindPopup(popupInformation);
+            console.log("Data: " + dataPoint.name + " ("+ dataPoint.latitude + "," + dataPoint.longitude + ")=" + popupInformation);
+            marker.addTo(nationalParks);
+        }
+    }
+
+    L.control.layers(baseLayers, overlays, {collapsed:false} ).addTo(map);
+
+    map.whenReady(getMarkers).whenReady(getMlb);
+
+</script>
+</body>
+</html>
