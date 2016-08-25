@@ -1,4 +1,4 @@
-package com.openshift.evangelists.roadshow.db;
+package com.openshift.evangelists.roadshow.parks.db;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
@@ -7,9 +7,9 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.openshift.evangelists.roadshow.model.Coordinates;
-import com.openshift.evangelists.roadshow.model.DataPoint;
-import com.openshift.evangelists.roadshow.model.MLBPark;
+import com.openshift.evangelists.roadshow.parks.model.Coordinates;
+import com.openshift.evangelists.roadshow.parks.model.DataPoint;
+import com.openshift.evangelists.roadshow.parks.model.Park;
 import org.bson.Document;
 
 import java.io.*;
@@ -21,11 +21,10 @@ import java.util.List;
  */
 public class MongoDBConnection {
 
-    private static final String FILENAME = "/mlbparks.json";
+    private static final String FILENAME = "/nationalparks.json";
 
-    private static final String COLLECTION = "parks";
+    private static final String COLLECTION = "nationalparks";
 
-    // TODO: Get this from a Config file
     String dbHost = System.getenv("DB_HOST");
     String dbPort = System.getenv("DB_PORT");
     String dbUsername = System.getenv("DB_USERNAME");
@@ -77,11 +76,15 @@ public class MongoDBConnection {
         System.out.println("[DEBUG] MongoDBConnection.loadParks(InputStream)");
         List<Document> docs = new ArrayList<Document>();
         String currentLine = null;
+        int i = 1;
 
         BufferedReader in = new BufferedReader(new InputStreamReader(is));
         try {
             while ((currentLine = in.readLine()) != null) {
-                docs.add(Document.parse(currentLine.toString()));
+                String s = currentLine.toString();
+                // System.out.println("line "+ i++ + ": " + s);
+                Document doc = Document.parse(s);
+                docs.add(doc);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -90,41 +93,16 @@ public class MongoDBConnection {
     }
 
 
+    /**
+     *
+     * @param database
+     */
     public void clear(MongoDatabase database) {
         System.out.println("[DEBUG] MongoDBConnection.clear()");
-
-        MongoCollection<Document> collection = database.getCollection(COLLECTION);
+        MongoCollection<Document> collection = this.getCollection(database);
         collection.drop();
     }
 
-
-    public void init(MongoDatabase database, List<Document> parks) {
-        System.out.println("[DEBUG] MongoDBConnection.init(...)");
-
-        MongoCollection<Document> collection = database.getCollection(COLLECTION);
-
-        System.out.println("Items before insert: " + collection.count());
-        if (collection.count()!=0){
-            collection.drop();
-            System.out.println("Items droped");
-            System.out.println("Items after drop: " + collection.count());
-        }
-        collection.insertMany(parks);
-        System.out.println("Items after insert: " + collection.count());
-    }
-
-    public long sizeInDB(MongoDatabase database) {
-        MongoCollection<Document> collection = database.getCollection(COLLECTION);
-        return collection.count();
-    }
-
-    public void insert(MongoDatabase database, List<Document> parks) {
-        MongoCollection<Document> collection = database.getCollection(COLLECTION);
-
-        System.out.println("Items before insert: " + collection.count());
-        collection.insertMany(parks);
-        System.out.println("Items after insert: " + collection.count());
-    }
     /**
      *
      * @param database
@@ -137,33 +115,79 @@ public class MongoDBConnection {
     /**
      *
      * @param database
+     * @param parks
+     */
+    public void init(MongoDatabase database, List<Document> parks) {
+        System.out.println("[DEBUG] MongoDBConnection.init(...)");
+
+        MongoCollection<Document> collection = this.getCollection(database);
+
+        System.out.println("Items before insert: " + collection.count());
+        if (collection.count()!=0){
+            collection.drop();
+            System.out.println("Items droped");
+            System.out.println("Items after drop: " + collection.count());
+        }
+        collection.insertMany(parks);
+        collection.createIndex( new Document("coordinates","2d") );
+        System.out.println("Items after insert: " + collection.count());
+    }
+
+    /**
+     *
+     * @param database
+     * @return
+     */
+    public long sizeInDB(MongoDatabase database) {
+        MongoCollection<Document> collection = this.getCollection(database);
+        return collection.count();
+    }
+
+    /**
+     *
+     * @param database
+     * @param parks
+     */
+    public void insert(MongoDatabase database, List<Document> parks) {
+        MongoCollection<Document> collection = this.getCollection(database);
+
+        System.out.println("Items before insert: " + collection.count());
+        collection.insertMany(parks);
+        System.out.println("Items after insert: " + collection.count());
+    }
+
+    /**
+     *
+     * @param database
      * @return
      */
     public List<DataPoint> getAll(MongoDatabase database){
         System.out.println("[DEBUG] MongoDBConnection.getAll()");
 
-        int i = 0;
+        //int i = 0;
         FindIterable<Document> iterable = this.getCollection(database).find();
         List<DataPoint> dataPoints = new ArrayList<DataPoint>();
         for(Document current: iterable){
             DataPoint dataPoint = getPark(current);
-            System.out.println("Adding item " + i++ + ": " + dataPoint);
+            // System.out.println("Adding item " + i++ + ": " + dataPoint);
             dataPoints.add(dataPoint);
         }
+        System.out.println("Elements returned: " + dataPoints.size());
         return dataPoints;
     }
 
-    public List<DataPoint> getByQuery(MongoDatabase database, BasicDBObject query) {
+    public List<DataPoint> getByQuery(MongoDatabase database, BasicDBObject query){
         System.out.println("[DEBUG] MongoDBConnection.getByQuery()");
-
-        int i = 0;
+        
+        //int i=0;
         FindIterable<Document> iterable = this.getCollection(database).find(query);
         List<DataPoint> dataPoints = new ArrayList<DataPoint>();
-        for (Document current : iterable) {
+        for(Document current: iterable){
             DataPoint dataPoint = getPark(current);
-            System.out.println("Adding item " + i++ + ": " + dataPoint);
+            // System.out.println("Adding item " + i++ + ": " + dataPoint);
             dataPoints.add(dataPoint);
         }
+        System.out.println("Elements returned: " + dataPoints.size());
         return dataPoints;
     }
 
@@ -173,26 +197,26 @@ public class MongoDBConnection {
      * @return
      */
     public DataPoint getPark(Document current){
-        MLBPark park = new MLBPark();
+        Park park = new Park();
         park.setId(current.getObjectId("_id").toString());
         park.setName(current.getString("name"));
-        park.setBallpark(current.getString("ballpark"));
+        park.setToponymName(current.getString("toponymName"));
 
         Coordinates cord = new Coordinates(current.get("coordinates",List.class));
         park.setPosition(cord);
         park.setLatitude(cord.getLatitude());
         park.setLongitude(cord.getLongitude());
 
-        park.setLeague(current.getString("league"));
-        park.setPayroll(current.getInteger("payroll"));
-
+        park.setCountryCode(current.getString("countryCode"));
+        park.setCountryName(current.getString("countryName"));
         return park;
     }
 
-
+/*
     public static void main(String[] args) {
         MongoDBConnection con = new MongoDBConnection();
-        List<Document> parks = con.loadParks("/Users/jmorales/repositories/jorgemoralespou/openshift/roadshow-mongodb/parks-mongo/src/main/resources/parks.json");
+//        List<Document> parks = con.loadParks("/Users/jmorales/repositories/jorgemoralespou/openshift/roadshow-mongodb/nationalparks-mongo/src/main/resources/nationalparks.json");
+        List<Document> parks = con.loadParks("/Users/jmorales/repositories/jorgemoralespou/openshift/roadshow-mongodb/nationalparks-mongo/src/main/resources/nationalparks.json");
         MongoDatabase db = con.connect();
         con.init(db, parks);
         System.out.println("Number of national parks in the DB: " + con.sizeInDB(db));
@@ -203,7 +227,7 @@ public class MongoDBConnection {
             System.out.println("DataPoint: " + dataPoint.toString());
         }
     }
-
+*/
 
 
 }

@@ -7,7 +7,7 @@ import javax.ws.rs.core.Application;
  * Created by jmorales on 11/08/16.
  */
 @ApplicationPath("/ws")
-public class MLBParksApplication extends Application{
+public class MLBParksApplication extends Application {
     public MLBParksApplication() {
     }
 }

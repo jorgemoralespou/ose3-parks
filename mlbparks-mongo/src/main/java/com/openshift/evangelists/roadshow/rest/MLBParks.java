@@ -1,10 +1,9 @@
 package com.openshift.evangelists.roadshow.rest;
 
-import com.mongodb.*;
+import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoDatabase;
 import com.openshift.evangelists.roadshow.db.MongoDBConnection;
 import com.openshift.evangelists.roadshow.model.DataPoint;
-import com.openshift.evangelists.roadshow.model.View;
 import org.bson.Document;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -18,70 +17,78 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-public class MLBParks implements DataPointsResource {
+@Path("/data")
+public class MLBParks {
 
-	MongoDBConnection con = new MongoDBConnection();
+    MongoDBConnection con = new MongoDBConnection();
 
-	//@Inject
-	//private DBConnection dbConnection;
+    //@Inject
+    //private DBConnection dbConnection;
 
-	@GET
-	@Path("/load")
-	public String load(){
-		System.out.println("[INFO] load()");
-		MongoDBConnection con = new MongoDBConnection();
-		List<Document> parks = con.loadParks();
-		MongoDatabase db = con.connect();
-		con.init(db, parks);
-		return "Items inserted in database: " + con.sizeInDB(db);
-	}
+    @GET
+    @Path("/load")
+    public String load() {
+        System.out.println("[INFO] load()");
+        MongoDBConnection con = new MongoDBConnection();
+        List<Document> parks = con.loadParks();
+        MongoDatabase db = con.connect();
+        con.init(db, parks);
+        return "Items inserted in database: " + con.sizeInDB(db);
+    }
 
-	public List<? extends DataPoint> getAllDataPoints(@Context HttpServletResponse response) {
-		System.out.println("[DEBUG] getAllDataPoints");
+    @GET()
+    @Path("/")
+    @Produces("application/json")
+    public List<? extends DataPoint> getAllDataPoints(@Context HttpServletResponse response) {
+        System.out.println("[DEBUG] getAllDataPoints");
 
-		MongoDBConnection con = new MongoDBConnection();
-		MongoDatabase db = con.connect();
+        MongoDBConnection con = new MongoDBConnection();
+        MongoDatabase db = con.connect();
 
-		response.setHeader("Access-Control-Allow-Origin","*");
+        response.setHeader("Access-Control-Allow-Origin", "*");
 
-		return con.getAll(db);
-	}
+        return con.getAll(db);
+    }
+
+    @GET
+    @Produces("application/json")
+    @Path("within")
+    public List<? extends DataPoint> findDataPointsWithin(@Context HttpServletResponse response, @QueryParam("lat1") float lat1,
+                                                          @QueryParam("lon1") float lon1,
+                                                          @QueryParam("lat2") float lat2,
+                                                          @QueryParam("lon2") float lon2) {
+        System.out.println("[DEBUG] findDataPointsWithin(" + lat1 + "," + lon1 + "," + lat2 + "," + lon2 + ")");
 
 
-	public List<? extends DataPoint> findDataPointsWithin(@Context HttpServletResponse response, @QueryParam("lat1") float lat1,
-													 @QueryParam("lon1") float lon1,
-													 @QueryParam("lat2") float lat2,
-													 @QueryParam("lon2") float lon2) {
-		System.out.println("[DEBUG] findDataPointsWithin(" + lat1 + "," + lon1 + "," + lat2 + "," + lon2 + ")");
+        MongoDBConnection con = new MongoDBConnection();
+        MongoDatabase db = con.connect();
 
+        // make the query object
+        BasicDBObject spatialQuery = new BasicDBObject();
 
-		MongoDBConnection con = new MongoDBConnection();
-		MongoDatabase db = con.connect();
+        ArrayList<double[]> boxList = new ArrayList<double[]>();
+        boxList.add(new double[]{new Float(lat1), new Float(lon1)});
+        boxList.add(new double[]{new Float(lat2), new Float(lon2)});
 
-		// make the query object
-		BasicDBObject spatialQuery = new BasicDBObject();
+        BasicDBObject boxQuery = new BasicDBObject();
+        boxQuery.put("$box", boxList);
 
-		ArrayList<double[]> boxList = new ArrayList<double[]>();
-		boxList.add(new double[] { new Float(lat1), new Float(lon1) });
-		boxList.add(new double[] { new Float(lat2), new Float(lon2) });
+        spatialQuery.put("coordinates", new BasicDBObject("$within", boxQuery));
+        System.out.println("Using spatial query: " + spatialQuery.toString());
 
-		BasicDBObject boxQuery = new BasicDBObject();
-		boxQuery.put("$box", boxList);
+        response.setHeader("Access-Control-Allow-Origin", "*");
 
-		spatialQuery.put("coordinates", new BasicDBObject("$within", boxQuery));
-		System.out.println("Using spatial query: " + spatialQuery.toString());
+        return con.getByQuery(db, spatialQuery);
+    }
 
-		response.setHeader("Access-Control-Allow-Origin","*");
+    @GET
+    @Produces("application/json")
+    @Path("centered")
+    public List<DataPoint> findDataPointsCentered(@Context HttpServletResponse response, float lat, float lon, int maxDistance, int minDistance) {
 
-		return con.getByQuery(db,spatialQuery);
-	}
-
-	@Override
-	public List<DataPoint> findDataPointsCentered(@Context HttpServletResponse response, float lat, float lon, int maxDistance, int minDistance) {
-
-		response.setHeader("Access-Control-Allow-Origin","*");
-		// TODO: Implement this
-		return null;
-	}
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        // TODO: Implement this
+        return null;
+    }
 
 }
