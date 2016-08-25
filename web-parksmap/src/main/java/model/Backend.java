@@ -3,14 +3,15 @@ package model;
 import com.openshift.evangelists.roadshow.parks.model.Coordinates;
 
 /**
+ *
  * Created by jmorales on 24/08/16.
  */
 public class Backend {
     private String name;
     private String displayName;
-    private String Url;
+    private String url;
 
-    private Coordinates center = new Coordinates("0","0");
+    private Coordinates center = new Coordinates("0", "0");
     private int zoom = 1;
 
 
@@ -20,13 +21,13 @@ public class Backend {
     public Backend(String name, String displayName, String url) {
         this.name = name;
         this.displayName = displayName;
-        Url = url;
+        url = url;
     }
 
     public Backend(String name, String displayName, String url, Coordinates center, int zoom) {
         this.name = name;
         this.displayName = displayName;
-        Url = url;
+        this.url = url;
         this.center = center;
         this.zoom = zoom;
     }
@@ -48,11 +49,11 @@ public class Backend {
     }
 
     public String getUrl() {
-        return Url;
+        return url;
     }
 
     public void setUrl(String url) {
-        Url = url;
+        this.url = url;
     }
 
     public Coordinates getCenter() {
@@ -76,9 +77,10 @@ public class Backend {
         return "Backend{" +
                 "name='" + name + '\'' +
                 ", displayName='" + displayName + '\'' +
-                ", Url='" + Url + '\'' +
+                ", url='" + url + '\'' +
                 ", center='" + center + '\'' +
                 ", zoom='" + zoom + '\'' +
                 '}';
     }
+
 }

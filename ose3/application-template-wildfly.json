@@ -28,13 +28,6 @@
       "required": true
     },
     {
-      "description": "The name for the NationalParks application.",
-      "displayName": "NationalParks app",
-      "name": "NATIONALPARKS_APPLICATION_NAME",
-      "value": "nationalparks",
-      "required": true
-    },
-    {
       "description": "The name of the service that will decide which backed to use. Modify the selector on this service to go to a different backend",
       "displayName": "Data Service",
       "name": "DATA_SVC",
@@ -148,6 +141,24 @@
         "db.password": "${MONGODB_PASSWORD}",
         "db.name": "${MONGODB_DATABASE}",
         "db.properties": "db.user=${MONGODB_USER}\ndb.password=${MONGODB_PASSWORD}\ndb.name=${MONGODB_DATABASE}"
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "s2i-java"
+      },
+      "spec": {
+        "tags": [
+          {
+            "name": "latest",
+            "from": {
+              "kind": "DockerImage",
+              "name": "jorgemoralespou/s2i-java"
+            }
+          }
+        ]
       }
     },
     {
@@ -368,24 +379,20 @@
           "git": {
             "uri": "${GIT_URI}",
             "ref": "${GIT_REF}"
-          }
+          },
+          "contextDir": "web-parksmap"
         },
         "strategy": {
           "type": "Source",
           "sourceStrategy": {
             "from": {
               "kind": "ImageStreamTag",
-              "namespace": "openshift",
-              "name": "wildfly:latest"
+              "name": "s2i-java:latest"
             },
             "env": [
               {
                 "name": "MAVEN_ARGS",
-                "value": "clean package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,web-svc"
-              },
-              {
-                "name": "ARTIFACT_DIR",
-                "value": "web-svc/target"
+                "value": "clean install spring-boot:repackage -DskipTests -Dcom.redhat.xpaas.repo.redhatga"
               },
               {
                 "name": "MAVEN_MIRROR_URL",
@@ -518,7 +525,7 @@
           "component": "${WEB_APPLICATION_NAME}"
         },
         "annotations": {
-          "service.alpha.openshift.io/dependencies": "[{\"name\":\"${MLBPARKS_APPLICATION_NAME}\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"${NATIONALPARKS_APPLICATION_NAME}\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"${MONGODB_APPLICATION_NAME}\",\"namespace\":\"\",\"kind\":\"Service\"}]"
+          "service.alpha.openshift.io/dependencies": "[{\"name\":\"${MLBPARKS_APPLICATION_NAME}\",\"namespace\":\"\",\"kind\":\"Service\"},{\"name\":\"${MONGODB_APPLICATION_NAME}\",\"namespace\":\"\",\"kind\":\"Service\"}]"
         }
       },
       "spec": {
@@ -551,279 +558,6 @@
         "to": {
           "kind": "Service",
           "name": "${WEB_APPLICATION_NAME}",
-          "weight": 100
-        },
-        "port": {
-          "targetPort": "8080-tcp"
-        }
-      }
-    },
-    {
-      "kind": "ImageStream",
-      "apiVersion": "v1",
-      "metadata": {
-        "name": "${NATIONALPARKS_APPLICATION_NAME}"
-      },
-      "spec": {
-        "tags": [
-          {
-            "name": "latest"
-          }
-        ]
-      }
-    },
-    {
-      "kind": "BuildConfig",
-      "apiVersion": "v1",
-      "metadata": {
-        "name": "${NATIONALPARKS_APPLICATION_NAME}",
-        "labels": {
-          "build": "${NATIONALPARKS_APPLICATION_NAME}"
-        }
-      },
-      "spec": {
-        "triggers": [
-          {
-            "type": "GitHub",
-            "github": {
-              "secret": "${GITHUB_TRIGGER_SECRET}"
-            }
-          },
-          {
-            "type": "Generic",
-            "generic": {
-              "secret": "${GENERIC_TRIGGER_SECRET}"
-            }
-          }
-        ],
-        "runPolicy": "Serial",
-        "source": {
-          "type": "Git",
-          "git": {
-            "uri": "${GIT_URI}",
-            "ref": "${GIT_REF}"
-          }
-        },
-        "strategy": {
-          "type": "Source",
-          "sourceStrategy": {
-            "from": {
-              "kind": "ImageStreamTag",
-              "namespace": "openshift",
-              "name": "wildfly:latest"
-            },
-            "env": [
-              {
-                "name": "MAVEN_ARGS",
-                "value": "clean package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,nationalparks-mongo"
-              },
-              {
-                "name": "ARTIFACT_DIR",
-                "value": "nationalparks-mongo/target"
-              },
-              {
-                "name": "MAVEN_MIRROR_URL",
-                "value": "${MAVEN_MIRROR_URL}"
-              }
-            ],
-            "incremental": true
-          }
-        },
-        "output": {
-          "to": {
-            "kind": "ImageStreamTag",
-            "name": "${NATIONALPARKS_APPLICATION_NAME}:latest"
-          }
-        },
-        "resources": {},
-        "postCommit": {}
-      }
-    },
-    {
-      "kind": "DeploymentConfig",
-      "apiVersion": "v1",
-      "metadata": {
-        "name": "${NATIONALPARKS_APPLICATION_NAME}",
-        "labels": {
-          "component": "${NATIONALPARKS_APPLICATION_NAME}"
-        }
-      },
-      "spec": {
-        "strategy": {
-          "type": "Rolling",
-          "rollingParams": {
-            "updatePeriodSeconds": 1,
-            "intervalSeconds": 1,
-            "timeoutSeconds": 600,
-            "maxUnavailable": "25%",
-            "maxSurge": "25%",
-            "post": {
-              "failurePolicy": "Retry",
-              "execNewPod": {
-                "command": [
-                  "curl",
-                  "http://${NATIONALPARKS_APPLICATION_NAME}:8080/ws/data/load"
-                ],
-                "containerName": "${NATIONALPARKS_APPLICATION_NAME}"
-              }
-            }
-
-          },
-          "resources": {}
-        },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          },
-          {
-            "type": "ImageChange",
-            "imageChangeParams": {
-              "automatic": true,
-              "containerNames": [
-                "${NATIONALPARKS_APPLICATION_NAME}"
-              ],
-              "from": {
-                "kind": "ImageStreamTag",
-                "name": "${NATIONALPARKS_APPLICATION_NAME}:latest"
-              }
-            }
-          }
-        ],
-        "replicas": 1,
-        "test": false,
-        "selector": {
-          "component": "${NATIONALPARKS_APPLICATION_NAME}"
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "component": "${NATIONALPARKS_APPLICATION_NAME}"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "name": "${NATIONALPARKS_APPLICATION_NAME}",
-                "image": "${NATIONALPARKS_APPLICATION_NAME}",
-                "ports": [
-                  {
-                    "containerPort": 8080,
-                    "protocol": "TCP"
-                  }
-                ],
-                "env": [
-                  {
-                    "name": "DB_HOST",
-                    "value": "${MONGODB_APPLICATION_NAME}"
-                  },
-                  {
-                    "name": "DB_PORT",
-                    "value": "27017"
-                  },
-                  {
-                    "name": "DB_USERNAME",
-                    "valueFrom": {
-                      "configMapKeyRef": {
-                        "name": "config",
-                        "key": "db.user"
-                      }
-                    }
-                  },
-                  {
-                    "name": "DB_PASSWORD",
-                    "valueFrom": {
-                      "configMapKeyRef": {
-                        "name": "config",
-                        "key": "db.password"
-                      }
-                    }
-                  },
-                  {
-                    "name": "DB_NAME",
-                    "valueFrom": {
-                      "configMapKeyRef": {
-                        "name": "config",
-                        "key": "db.name"
-                      }
-                    }
-                  }
-                ],
-                "resources": {},
-                "livenessProbe": {
-                  "httpGet": {
-                    "path": "/ws/healthz",
-                    "port": 8080,
-                    "scheme": "HTTP"
-                  },
-                  "initialDelaySeconds": 120,
-                  "timeoutSeconds": 1,
-                  "periodSeconds": 10,
-                  "successThreshold": 1,
-                  "failureThreshold": 3
-                },
-                "readinessProbe": {
-                  "httpGet": {
-                    "path": "/ws/healthz",
-                    "port": 8080,
-                    "scheme": "HTTP"
-                  },
-                  "initialDelaySeconds": 20,
-                  "timeoutSeconds": 1,
-                  "periodSeconds": 10,
-                  "successThreshold": 1,
-                  "failureThreshold": 3
-                },
-                "terminationMessagePath": "/dev/termination-log",
-                "imagePullPolicy": "IfNotPresent"
-              }
-            ],
-            "restartPolicy": "Always",
-            "terminationGracePeriodSeconds": 30,
-            "dnsPolicy": "ClusterFirst",
-            "securityContext": {}
-          }
-        }
-      }
-    },
-    {
-      "kind": "Service",
-      "apiVersion": "v1",
-      "metadata": {
-        "name": "${NATIONALPARKS_APPLICATION_NAME}",
-        "labels": {
-          "component": "${NATIONALPARKS_APPLICATION_NAME}"
-        }
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "8080-tcp",
-            "protocol": "TCP",
-            "port": 8080,
-            "targetPort": 8080
-          }
-        ],
-        "selector": {
-          "component": "${NATIONALPARKS_APPLICATION_NAME}"
-        },
-        "type": "ClusterIP",
-        "sessionAffinity": "None"
-      }
-    },
-    {
-      "kind": "Route",
-      "apiVersion": "v1",
-      "metadata": {
-        "name": "${NATIONALPARKS_APPLICATION_NAME}",
-        "labels": {
-          "component": "${NATIONALPARKS_APPLICATION_NAME}"
-        }
-      },
-      "spec": {
-        "host": "",
-        "to": {
-          "kind": "Service",
-          "name": "${NATIONALPARKS_APPLICATION_NAME}",
           "weight": 100
         },
         "port": {
@@ -875,7 +609,8 @@
           "git": {
             "uri": "${GIT_URI}",
             "ref": "${GIT_REF}"
-          }
+          },
+          "contextDir": "mlbparks-mongo"
         },
         "strategy": {
           "type": "Source",
@@ -888,11 +623,7 @@
             "env": [
               {
                 "name": "MAVEN_ARGS",
-                "value": "clean package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga -pl data-svc,mlbparks-mongo"
-              },
-              {
-                "name": "ARTIFACT_DIR",
-                "value": "mlbparks-mongo/target"
+                "value": "clean package -Popenshift -DskipTests -Dcom.redhat.xpaas.repo.redhatga"
               },
               {
                 "name": "MAVEN_MIRROR_URL",
