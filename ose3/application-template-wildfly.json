@@ -17,7 +17,7 @@
       "description": "The name for the Web application.",
       "displayName": "WebMap app",
       "name": "WEB_APPLICATION_NAME",
-      "value": "web",
+      "value": "webmaps",
       "required": true
     },
     {
@@ -25,13 +25,6 @@
       "displayName": "MLBParks app",
       "name": "MLBPARKS_APPLICATION_NAME",
       "value": "mlbparks",
-      "required": true
-    },
-    {
-      "description": "The name of the service that will decide which backed to use. Modify the selector on this service to go to a different backend",
-      "displayName": "Data Service",
-      "name": "DATA_SVC",
-      "value": "backend",
       "required": true
     },
     {
@@ -131,16 +124,18 @@
       "kind": "ConfigMap",
       "apiVersion": "v1",
       "metadata": {
-        "name": "config",
+        "name": "parks",
         "labels": {
           "component": "config"
         }
       },
       "data": {
+        "sampletext": "Using ConfigMaps in Spring cloud for Kubernetes",
         "db.user": "${MONGODB_USER}",
         "db.password": "${MONGODB_PASSWORD}",
         "db.name": "${MONGODB_DATABASE}",
-        "db.properties": "db.user=${MONGODB_USER}\ndb.password=${MONGODB_PASSWORD}\ndb.name=${MONGODB_DATABASE}"
+        "db.properties": "db.user=${MONGODB_USER}\ndb.password=${MONGODB_PASSWORD}\ndb.name=${MONGODB_DATABASE}",
+        "application.properties": "spring.data.mongodb.uri=mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_APPLICATION_NAME}:27017/${MONGODB_DATABASE}"
       }
     },
     {
@@ -252,10 +247,18 @@
                 ],
                 "env": [
                   {
+                    "name": "KUBERNETES_NAMESPACE",
+                    "valueFrom": {
+                      "fieldRef": {
+                        "fieldPath": "metadata.namespace"
+                      }
+                    }
+                  },
+                  {
                     "name": "MONGODB_USER",
                     "valueFrom": {
                       "configMapKeyRef": {
-                        "name": "config",
+                        "name": "parks",
                         "key": "db.user"
                       }
                     }
@@ -264,7 +267,7 @@
                     "name": "MONGODB_PASSWORD",
                     "valueFrom": {
                       "configMapKeyRef": {
-                        "name": "config",
+                        "name": "parks",
                         "key": "db.password"
                       }
                     }
@@ -273,7 +276,7 @@
                     "name": "MONGODB_DATABASE",
                     "valueFrom": {
                       "configMapKeyRef": {
-                        "name": "config",
+                        "name": "parks",
                         "key": "db.name"
                       }
                     }
@@ -371,6 +374,12 @@
             "generic": {
               "secret": "${GENERIC_TRIGGER_SECRET}"
             }
+          },
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "ImageChange"
           }
         ],
         "runPolicy": "Serial",
@@ -475,14 +484,18 @@
                 ],
                 "env": [
                   {
-                    "name": "DATA_SERVICE",
-                    "value": "${DATA_SVC}:8080"
+                    "name": "KUBERNETES_NAMESPACE",
+                    "valueFrom": {
+                      "fieldRef": {
+                        "fieldPath": "metadata.namespace"
+                      }
+                    }
                   }
                 ],
                 "resources": {},
                 "livenessProbe": {
                   "httpGet": {
-                    "path": "/ws/healthz",
+                    "path": "/health.jsp",
                     "port": 8080,
                     "scheme": "HTTP"
                   },
@@ -494,7 +507,7 @@
                 },
                 "readinessProbe": {
                   "httpGet": {
-                    "path": "/ws/healthz",
+                    "path": "/health.jsp",
                     "port": 8080,
                     "scheme": "HTTP"
                   },
@@ -601,6 +614,12 @@
             "generic": {
               "secret": "${GENERIC_TRIGGER_SECRET}"
             }
+          },
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "ImageChange"
           }
         ],
         "runPolicy": "Serial",
@@ -671,7 +690,6 @@
                 "containerName": "${MLBPARKS_APPLICATION_NAME}"
               }
             }
-
           },
           "resources": {}
         },
@@ -717,6 +735,14 @@
                 ],
                 "env": [
                   {
+                    "name": "KUBERNETES_NAMESPACE",
+                    "valueFrom": {
+                      "fieldRef": {
+                        "fieldPath": "metadata.namespace"
+                      }
+                    }
+                  },
+                  {
                     "name": "DB_HOST",
                     "value": "${MONGODB_APPLICATION_NAME}"
                   },
@@ -728,7 +754,7 @@
                     "name": "DB_USERNAME",
                     "valueFrom": {
                       "configMapKeyRef": {
-                        "name": "config",
+                        "name": "parks",
                         "key": "db.user"
                       }
                     }
@@ -737,7 +763,7 @@
                     "name": "DB_PASSWORD",
                     "valueFrom": {
                       "configMapKeyRef": {
-                        "name": "config",
+                        "name": "parks",
                         "key": "db.password"
                       }
                     }
@@ -746,7 +772,7 @@
                     "name": "DB_NAME",
                     "valueFrom": {
                       "configMapKeyRef": {
-                        "name": "config",
+                        "name": "parks",
                         "key": "db.name"
                       }
                     }
@@ -833,31 +859,6 @@
         "port": {
           "targetPort": "8080-tcp"
         }
-      }
-    },
-    {
-      "kind": "Service",
-      "apiVersion": "v1",
-      "metadata": {
-        "name": "${DATA_SVC}",
-        "labels": {
-          "component": "${DATA_SVC}"
-        }
-      },
-      "spec": {
-        "ports": [
-          {
-            "name": "8080-tcp",
-            "protocol": "TCP",
-            "port": 8080,
-            "targetPort": 8080
-          }
-        ],
-        "selector": {
-          "component": "${MLBPARKS_APPLICATION_NAME}"
-        },
-        "type": "ClusterIP",
-        "sessionAffinity": "None"
       }
     }
   ]

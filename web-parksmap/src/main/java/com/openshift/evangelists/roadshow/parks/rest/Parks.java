@@ -5,6 +5,7 @@ import com.openshift.evangelists.roadshow.parks.db.MongoDBConnection;
 import com.openshift.evangelists.roadshow.parks.model.Park;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -15,6 +16,9 @@ import java.util.List;
 public class Parks {
 
     private final MongoDBConnection con;
+
+    @Value("${sampletext}")
+    public String sampletext;
 
     @Autowired
     public Parks(MongoDBConnection connection) {
@@ -35,6 +39,7 @@ public class Parks {
     public List<Park> getAllDataPoints() {
         System.out.println("[DEBUG] getAllDataPoints");
 
+        System.out.println("============ " + sampletext);
         return con.getAll();
     }
 

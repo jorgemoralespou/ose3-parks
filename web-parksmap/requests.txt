@@ -1,16 +1,18 @@
+MLB Parks:
+Add:
+curl -i -X POST -H 'Content-Type: application/json' -d '{"name":"mlbparks","displayName":"MLB Parks","url":"http://mlbparks-parksmap.apps.10.2.2.2.xip.io", "center":{"latitude": "0", "longitude":"0"},"zoom":1}' http://webmaps-parksmap.apps.10.2.2.2.xip.io/ws/backends/
 
-Add MLBParks:
-curl -i -X POST -H 'Content-Type: application/json' -d '{"name":"mlbparks","displayName":"MLB Parks","url":"http://localhost:8081", "center":{"latitude": "0", "longitude":"0"},"zoom":1}' http://localhost:8080/ws/backends/
-
-Add NationalParks:
-curl -i -X POST -H 'Content-Type: application/json' -d '{"name":"nationalparks","displayName":"National Parks","url":"", "center":{"latitude": "0", "longitude":"0"},"zoom":"1"}' http://localhost:8080/ws/backends/
+Delete:
+curl -i -X DELETE -H 'Content-Type: application/json' -d '{"name":"mlbparks","displayName":"MLB Parks","url":"http://mlbparks-parksmap.apps.10.2.2.2.xip.io", "center":{"latitude": "0", "longitude":"0"},"zoom":1}' http://webmaps-parksmap.apps.10.2.2.2.xip.io/ws/backends/
 
 
-Delete MLB Parks:
-curl -i -X DELETE -H 'Content-Type: application/json' -d '{"name":"mlbparks","displayName":"MLB Parks","url":"http://localhost:8081", "center":{"latitude": "0", "longitude":"0"},"zoom":"1"}' http://localhost:8080/ws/backends/
+NationalParks:
+Add:
+curl -i -X POST -H 'Content-Type: application/json' -d '{"name":"nationalparks","displayName":"National Parks","url":"", "center":{"latitude": "0", "longitude":"0"},"zoom":"1"}' http://webmaps-parksmap.apps.10.2.2.2.xip.io/ws/backends/
 
-Delete National Parks:
-curl -i -X DELETE -H 'Content-Type: application/json' -d '{"name":"nationalparks","displayName":"National Parks","url":"", "center":{"latitude": "0", "longitude":"0"},"zoom":"1"}' http://localhost:8080/ws/backends/
+Delete:
+curl -i -X DELETE -H 'Content-Type: application/json' -d '{"name":"nationalparks","displayName":"National Parks","url":"", "center":{"latitude": "0", "longitude":"0"},"zoom":1}' http://webmaps-parksmap.apps.10.2.2.2.xip.io/ws/backends/
 
-Get All:
-curl -i -X GET -H 'Content-Type: application/json' http://localhost:8080/ws/backends/
+List:
+curl -i -X GET -H 'Content-Type: application/json'  http://webmaps-parksmap.apps.10.2.2.2.xip.io/ws/backends/
+
