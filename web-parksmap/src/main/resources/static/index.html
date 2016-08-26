@@ -6,12 +6,19 @@
 	<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="leaflet/markercluster/MarkerCluster.css"/>
 	<link rel="stylesheet" href="leaflet/markercluster/MarkerCluster.Default.css"/>
+<!--
 	<link href="leaflet/easyButton/easy-button.css" rel="stylesheet"/>
+-->
 	<script src="leaflet/leaflet.js"></script>
 	<script src="leaflet/markercluster/leaflet.markercluster.js"></script>
+<!--
 	<script src="leaflet/easyButton/easy-button.js"></script>
-
+-->
 	<script src="jquery-3.1.0.min.js"></script>
+    <!-- For websockets -->
+    <script src="sockjs-1.1.0.js"></script>
+    <script src="stomp.js"></script>
+
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
 	<style type="text/css">
@@ -47,11 +54,66 @@
 <div id="map"></div>
 
 <script>
-	//    var mlbpark = { name: "parks", displayName:"MLB Parks", url: "http://localhost:8081", visible: true, layer: new L.markerClusterGroup() };
-	//    var nationalpark = { name: "nationalparks", displayName:"National Parks", url: "http://localhost:8082", visible: true, layer: new L.markerClusterGroup()  };
+/*
 
-	var backends = [];
+ backend{
+    name: "name";
+    displayName: "displayName";
+    url: "url",
+    center: ["",""],
+    zoom: 1,
+    visible: true,
+    layer: L.markerClusterGroup()
+ };
+ */
+    /************************
+     * END OF WEBSOCKETS COMM
+     ************************/
+    var stompClient = null;
 
+    function connect() {
+        var socket = new SockJS('/socks-backends');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function(frame) {
+            // console.log('Connected: ' + frame);
+            stompClient.subscribe('/topic/add', function(message){
+                var backend = getBackend(JSON.parse(message.body));
+                addBackend(backend);
+            });
+            stompClient.subscribe('/topic/remove', function(message){
+                var backend = getBackend(JSON.parse(message.body));
+                removeBackend(backend.name);
+            });
+        });
+    }
+
+    var getBackend = function(backendFromServer){
+        var backend = {
+            name: backendFromServer.name,
+            displayName: backendFromServer.displayName,
+            url: backendFromServer.url,
+            center: backendFromServer.center,
+            zoom: backendFromServer.zoom,
+            visible: true,
+            layer: new L.markerClusterGroup()
+        };
+        return backend;
+    }
+
+    function disconnect() {
+        if (stompClient != null) {
+            stompClient.disconnect();
+        }
+        setConnected(false);
+        console.log("Disconnected");
+    }
+
+
+    /************************
+     * END OF WEBSOCKETS COMM
+     ************************/
+
+	var backends = new Map();
 
 	var mbAttr = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
 					'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
@@ -80,9 +142,19 @@
 
 	function addBackend(backend){
 		console.log("Adding layer for backend: " + backend.name);
+
+        // Check that the backend (by name did not exist, in which case, we'll remove the old one)
+        if (backends.has(backend.name)){
+            console.log("Removing old backend: " + backend.name);
+            removeBackend(backend.name);
+        }
+
+        backends.set(backend.name, backend);
+
 		map.addLayer(backend.layer);
 		controls.addOverlay(backend.layer, backend.displayName);
 
+        // Expected dataPoint { name, latitude, longitude }
 		$.get(backend.url + "/ws/data/", function(data){
 			for (var i = 0; i < data.length; i++){
 				dataPoint = data[i];
@@ -95,35 +167,24 @@
 	}
 
 	function removeBackend(backendName){
-		var backend = getByAttr(backends, "name", backendName);
-		controls.removeLayer(backend.layer);
-		map.removeLayer(backend.layer);
-
-		backends = removeByAttr(backends, 'name', backend.name);
-	}
-
-	function forEachBackend(){
-		backends.forEach(function(backend){
-			addBackend(backend);
-		});
+	    if (backends.has(backendName)) {
+            var backend = backends.get(backendName);
+            controls.removeLayer(backend.layer);
+            map.removeLayer(backend.layer);
+            backends.delete(backend.name);
+        } else{
+            console.log("Trying to remove a non existant backend: " + backendName);
+        }
 	}
 
 	function initialLoad(){
-		backends.length = 0;
+		backends.clear();
 		$.get("/ws/backends/", function(data){
 			for (var i = 0; i < data.length; i++){
 				var backendFromServer = data[i];
-				var backend = {
-					name: backendFromServer.name,
-					displayName: backendFromServer.displayName,
-					url: backendFromServer.url,
-					visible: true,
-					layer: new L.markerClusterGroup()
-				};
-				console.log("Backend: " + backend);
-				backends.push(backend);
+				var backend = getBackend(backendFromServer);
+                addBackend(backend);
 			}
-			forEachBackend();
 		}, "json");
 	}
 
@@ -133,87 +194,8 @@
 
 	}, 5000);
 
-	map.whenReady(initialLoad);
+	map.whenReady(initialLoad).whenReady(connect);
 
-	var removeByAttr = function(arr, attr, value){
-		var i = arr.length;
-		while(i--){
-			if( arr[i]
-					&& arr[i].hasOwnProperty(attr)
-					&& (arguments.length > 2 && arr[i][attr] === value ) ){
-				console.log("Removed: [" + i + "]" + arr[i] );
-				arr.splice(i,1);
-
-			}
-		}
-		return arr;
-	}
-
-	var getByAttr = function(arr, attr, value){
-		var i = arr.length;
-		while(i){
-			if( arr[i]
-					&& arr[i].hasOwnProperty(attr)
-					&& (arguments.length > 2 && arr[i][attr] === value ) ){
-				break;
-			}
-			i--;
-		}
-		console.log("getByAttr ("+value+"): [" + i + "]" + arr[i] );
-		return arr[i];
-	}
-
-	// This toggles below are for testing services come and go manually, until the server works
-
-	var mlbToggle = L.easyButton({
-		states: [
-			{
-				stateName: 'add-mlb-markers',
-				icon: '<span class="star">&check; MLBParks</span>',
-				title: 'add MLB markers',
-				onClick: function (control) {
-					var b = { name: "mlbparks", displayName:"MLB Parks", url: "http://localhost:8081", visible: true, layer: new L.markerClusterGroup() };
-					backends.push(b);
-					addBackend(b);
-					control.state('remove-mlb-markers');
-				}
-			}, {
-				stateName: 'remove-mlb-markers',
-				icon: '<span class="star">&cross; MLB Parks</span>',
-				title: 'remove MLB markers',
-				onClick: function (control) {
-					removeBackend('mlbparks');
-					control.state('add-mlb-markers');
-				}
-			}]
-	});
-	mlbToggle.state('remove-mlb-markers');
-	mlbToggle.addTo(map);
-
-	var natToggle = L.easyButton({
-		states: [
-			{
-				stateName: 'add-nat-markers',
-				icon: '<span class="star">&check; Nat Parks</span>',
-				title: 'add Nat Parks markers',
-				onClick: function (control) {
-					var b = { name: "nationalparks", displayName:"National Parks", url: "", visible: true, layer: new L.markerClusterGroup() };
-					backends.push(b);
-					addBackend(b);
-					control.state('remove-nat-markers');
-				}
-			}, {
-				stateName: 'remove-nat-markers',
-				icon: '<span class="star">&cross; MLB</span>',
-				title: 'remove Nat Parks markers',
-				onClick: function (control) {
-					removeBackend('nationalparks');
-					control.state('add-nat-markers');
-				}
-			}]
-	});
-	natToggle.state('remove-nat-markers');
-	natToggle.addTo(map);
 </script>
 </body>
 </html>

@@ -1,11 +1,20 @@
 package com.openshift.evangelists.roadshow.parks.model;
 
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-public class Park implements DataPoint {
+@Document
+public class Park {
+
+    @Id
+    private ObjectId id;
 
     private Object toponymName;
     private Object name;
 
+    @Indexed
     private Coordinates position;
 
     private Object longitude;
@@ -14,7 +23,13 @@ public class Park implements DataPoint {
     private Object countryCode;
     private Object countryName;
 
-    private Object id;
+    public Park() {
+    }
+
+    public Park(ObjectId id, Object name) {
+        this.id = id;
+        this.name = name;
+    }
 
     public Object getToponymName() {
         return toponymName;
@@ -72,13 +87,14 @@ public class Park implements DataPoint {
         this.countryName = countryName;
     }
 
-    public Object getId() {
+    public ObjectId getId() {
         return id;
     }
 
-    public void setId(Object id) {
+    public void setId(ObjectId id) {
         this.id = id;
     }
+
 
     @Override
     public String toString() {

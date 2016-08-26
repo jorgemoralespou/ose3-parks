@@ -2,7 +2,12 @@ package com.openshift.evangelists.roadshow.rest;
 
 import com.openshift.evangelists.roadshow.parks.model.Coordinates;
 import model.Backend;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +21,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/ws/backends")
 public class BackendsController {
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     Map<String, Backend> backends = new HashMap<String, Backend>();
 
@@ -31,6 +39,8 @@ public class BackendsController {
         //
         backends.put(backend.getName(), backend);
 
+        messagingTemplate.convertAndSend("/topic/add", backend);
+
         return new ArrayList<Backend>(backends.values());
     }
 
@@ -41,8 +51,11 @@ public class BackendsController {
         System.out.println("[INFO] Backends.delete(" + backend + ")");
         backends.remove(backend.getName());
 
+        messagingTemplate.convertAndSend("/topic/remove", backend);
+
         return new ArrayList<Backend>(backends.values());
     }
+
 
     @CrossOrigin
     @RequestMapping(method = RequestMethod.GET, value = "/", produces = "application/json")

@@ -8,7 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
  * Created by jmorales on 24/08/16.
  */
 @SpringBootApplication
-@ComponentScan(basePackages = "com.openshift.evangelists.roadshow.rest,com.openshift.evangelists.roadshow.parks.rest")
+@ComponentScan(basePackages = "com.openshift.evangelists.roadshow.rest,com.openshift.evangelists.roadshow.parks.rest,com.openshift.evangelists.roadshow.parks.db")
 public class ApiGatewayApplication {
 
     public static void main(String[] args) {
